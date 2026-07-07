@@ -25,8 +25,13 @@ public actor ServerCore {
 
     private var clients: [UnixSocketConnection] = []
 
-    public init(socketPath: String, statePath: String, serverVersion: String) throws {
-        listener = try UnixSocketListener(path: socketPath)
+    public init(
+        socketPath: String,
+        statePath: String,
+        serverVersion: String,
+        peerPolicy: PeerPolicy = .sameUserOnly
+    ) throws {
+        listener = try UnixSocketListener(path: socketPath, peerPolicy: peerPolicy)
         store = StateStore(path: statePath)
         self.serverVersion = serverVersion
         let loadedState = store.load()

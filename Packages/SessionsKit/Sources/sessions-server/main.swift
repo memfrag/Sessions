@@ -40,7 +40,25 @@ let serverVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as
 
 let core: ServerCore
 do {
-    core = try ServerCore(socketPath: socketPath, statePath: statePath, serverVersion: serverVersion)
+    // Only the Sessions app and this server binary (its stale-socket
+    // probe) may connect. Ad-hoc dev builds suffix the server identifier
+    // with a hash, hence the prefix rule.
+    //
+    // TODO: pin the Developer ID team at release (teamID: "XXXXXXXXXX").
+    // With ad-hoc signing the identifier is self-assignable and thus
+    // forgeable by a same-user process; a real team ID makes the check
+    // cryptographically unforgeable and is the intended security boundary.
+    let peerPolicy = PeerPolicy.signedClients(
+        identifiers: ["io.apparata.Sessions", "sessions-server"],
+        identifierPrefixes: ["sessions-server-"],
+        teamID: nil
+    )
+    core = try ServerCore(
+        socketPath: socketPath,
+        statePath: statePath,
+        serverVersion: serverVersion,
+        peerPolicy: peerPolicy
+    )
 } catch UnixSocketError.alreadyRunning(let path) {
     logger.error("Another server is already running on \(path)")
     exit(0)

@@ -1,0 +1,103 @@
+//
+//  Copyright © 2026 Apparata AB. All rights reserved.
+//
+
+import Darwin
+import Foundation
+import OSLog
+import Security
+
+/// Who may connect to the server socket. Same-UID is always required
+/// (enforced via `LOCAL_PEERCRED` before this policy runs).
+public enum PeerPolicy: Sendable {
+
+    /// Any process of the same user (tmux-style trust model). Used by
+    /// tests and available for dev servers.
+    case sameUserOnly
+
+    /// Additionally require the connecting process to have a valid code
+    /// signature whose identifier matches (cmux-style). `identifiers`
+    /// match exactly; `identifierPrefixes` cover ad-hoc signatures with
+    /// per-build hash suffixes (e.g. "sessions-server-<hash>"). If
+    /// `teamID` is set, the peer's team identifier must match too —
+    /// ad-hoc identifiers alone are forgeable, so release builds should
+    /// pin the Developer ID team.
+    case signedClients(identifiers: [String], identifierPrefixes: [String], teamID: String?)
+}
+
+/// Verifies connecting peers against a `PeerPolicy` using the socket's
+/// audit token (`LOCAL_PEERTOKEN`), which — unlike PID-based checks — is
+/// immune to PID-reuse races.
+enum PeerVerifier {
+
+    private static let logger = Logger(subsystem: "io.apparata.Sessions", category: "PeerVerifier")
+
+    /// `LOCAL_PEERTOKEN` from <sys/un.h>; not exposed to Swift.
+    private static let localPeerToken: Int32 = 0x006
+
+    static func isAuthorized(fd: Int32, policy: PeerPolicy) -> Bool {
+        switch policy {
+        case .sameUserOnly:
+            return true
+        case .signedClients(let identifiers, let prefixes, let teamID):
+            guard let token = peerAuditToken(of: fd) else {
+                logger.error("Rejecting peer: no audit token")
+                return false
+            }
+            guard let (identifier, peerTeamID) = signingInfo(for: token) else {
+                logger.error("Rejecting peer: unsigned or invalid signature")
+                return false
+            }
+            let identifierMatches = identifiers.contains(identifier)
+                || prefixes.contains { identifier.hasPrefix($0) }
+            guard identifierMatches else {
+                logger.error("Rejecting peer with identifier \(identifier)")
+                return false
+            }
+            if let teamID {
+                guard peerTeamID == teamID else {
+                    logger.error("Rejecting peer with team \(peerTeamID ?? "none")")
+                    return false
+                }
+            }
+            return true
+        }
+    }
+
+    private static func peerAuditToken(of fd: Int32) -> audit_token_t? {
+        var token = audit_token_t()
+        var length = socklen_t(MemoryLayout<audit_token_t>.size)
+        let result = getsockopt(fd, SOL_LOCAL, localPeerToken, &token, &length)
+        guard result == 0, length == socklen_t(MemoryLayout<audit_token_t>.size) else {
+            return nil
+        }
+        return token
+    }
+
+    /// Validates the peer's code signature and returns its signing
+    /// identifier and team identifier.
+    private static func signingInfo(for token: audit_token_t) -> (identifier: String, teamID: String?)? {
+        var tokenCopy = token
+        let tokenData = withUnsafeBytes(of: &tokenCopy) { Data($0) }
+        let attributes = [kSecGuestAttributeAudit: tokenData] as CFDictionary
+        var code: SecCode?
+        guard SecCodeCopyGuestWithAttributes(nil, attributes, [], &code) == errSecSuccess,
+              let code else {
+            return nil
+        }
+        guard SecCodeCheckValidity(code, [], nil) == errSecSuccess else {
+            return nil
+        }
+        var info: CFDictionary?
+        var staticCode: SecStaticCode?
+        guard SecCodeCopyStaticCode(code, [], &staticCode) == errSecSuccess,
+              let staticCode,
+              SecCodeCopySigningInformation(staticCode, [], &info) == errSecSuccess,
+              let dictionary = info as? [CFString: Any],
+              let identifier = dictionary[kSecCodeInfoIdentifier] as? String else {
+            return nil
+        }
+        let teamID = dictionary[kSecCodeInfoTeamIdentifier] as? String
+        return (identifier, teamID)
+    }
+}

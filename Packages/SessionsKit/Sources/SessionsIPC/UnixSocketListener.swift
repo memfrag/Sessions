@@ -26,12 +26,15 @@ public final class UnixSocketListener: Sendable {
 
     private let connectionsContinuation: AsyncStream<UnixSocketConnection>.Continuation
 
+    private let peerPolicy: PeerPolicy
+
     /// Binds and listens on `path`.
     ///
     /// If the socket file exists, probes it: a successful connect means
     /// another server is running (throws `alreadyRunning`); a refused
     /// connect means it is stale and is removed before binding.
-    public init(path: String) throws {
+    public init(path: String, peerPolicy: PeerPolicy = .sameUserOnly) throws {
+        self.peerPolicy = peerPolicy
         let directory = (path as NSString).deletingLastPathComponent
         try? FileManager.default.createDirectory(
             atPath: directory,
@@ -95,6 +98,10 @@ public final class UnixSocketListener: Sendable {
                 return
             }
             guard let peerUID = SocketAddress.peerUID(of: clientFd), peerUID == getuid() else {
+                Darwin.close(clientFd)
+                continue
+            }
+            guard PeerVerifier.isAuthorized(fd: clientFd, policy: peerPolicy) else {
                 Darwin.close(clientFd)
                 continue
             }
