@@ -112,6 +112,11 @@ struct GeneralSettingsTab: View {
                     "Also show Notification Center alerts",
                     isOn: $settings.attentionNotificationsEnabled
                 )
+                Toggle(
+                    "Play a sound",
+                    isOn: $settings.attentionNotificationSoundEnabled
+                )
+                .disabled(!settings.attentionNotificationsEnabled)
                 Text("""
                 Any program that rings the terminal bell or sends an OSC 9 \
                 notification triggers the same highlight.

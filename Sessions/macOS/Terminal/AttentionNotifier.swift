@@ -18,7 +18,8 @@ enum AttentionNotifier {
     private static var didRequestAuthorization = false
 
     static func post(title: String, body: String) {
-        guard AppEnvironment.default.appSettings.attentionNotificationsEnabled else { return }
+        let settings = AppEnvironment.default.appSettings
+        guard settings.attentionNotificationsEnabled else { return }
         let center = UNUserNotificationCenter.current()
         if !didRequestAuthorization {
             didRequestAuthorization = true
@@ -33,7 +34,7 @@ enum AttentionNotifier {
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
-        content.sound = .default
+        content.sound = settings.attentionNotificationSoundEnabled ? .default : nil
         let request = UNNotificationRequest(
             identifier: UUID().uuidString,
             content: content,

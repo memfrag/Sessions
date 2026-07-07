@@ -59,6 +59,9 @@ import KeyValueStore
         /// Notification Center.
         case attentionNotificationsEnabled
 
+        /// Whether attention notifications play a sound.
+        case attentionNotificationSoundEnabled
+
         // <-- (1 / 3) Add key for new property here
     }
 
@@ -151,6 +154,13 @@ import KeyValueStore
         }
     }
 
+    /// Whether attention notifications play a sound.
+    public var attentionNotificationSoundEnabled: Bool {
+        didSet {
+            store.save(attentionNotificationSoundEnabled, for: .attentionNotificationSoundEnabled)
+        }
+    }
+
     // <-- (2 / 3) Add property for new property here
 
     // MARK: Setup
@@ -178,6 +188,7 @@ import KeyValueStore
         terminalCursorBlinks = self.store.load(.terminalCursorBlinks, default: true)
         terminalThemeOverrides = self.store.load(.terminalThemeOverrides, default: [:])
         attentionNotificationsEnabled = self.store.load(.attentionNotificationsEnabled, default: false)
+        attentionNotificationSoundEnabled = self.store.load(.attentionNotificationSoundEnabled, default: true)
 
         // <-- (3 / 3) Add initializer for new property here.
     }
