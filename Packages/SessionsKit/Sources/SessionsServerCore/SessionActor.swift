@@ -116,6 +116,30 @@ actor SessionActor {
                 result.append("\(key)=\(value)")
             }
         }
+        result.append(contentsOf: shellIntegrationEnvironment(env: env))
+        return result
+    }
+
+    /// Ghostty-style automatic zsh integration: point ZDOTDIR at the
+    /// bundled shell-integration directory, whose .zshenv restores the
+    /// user's real ZDOTDIR, chains their config, and loads the Sessions
+    /// hooks (OSC 7 cwd reporting, Claude Code attention hooks). No-op
+    /// when the resources are absent (e.g. `swift run` dev server).
+    private static func shellIntegrationEnvironment(env: [String: String]) -> [String] {
+        guard let resources = Bundle.main.resourceURL else { return [] }
+        let directory = resources.appending(path: "ShellIntegration", directoryHint: .isDirectory)
+        let directoryPath = directory.path(percentEncoded: false)
+        guard FileManager.default.fileExists(atPath: directoryPath + "/.zshenv") else {
+            return []
+        }
+        var result = [
+            "ZDOTDIR=\(directoryPath)",
+            "SESSIONS_INTEGRATION_DIR=\(directoryPath)",
+            "SESSIONS_CLAUDE_HOOKS=\(directoryPath)/claude-hooks.json"
+        ]
+        if let original = env["ZDOTDIR"] {
+            result.append("SESSIONS_ORIG_ZDOTDIR=\(original)")
+        }
         return result
     }
 

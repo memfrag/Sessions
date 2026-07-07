@@ -20,6 +20,7 @@
 		5DAFC4B707DCD6CECA1FD7A9 /* BinaryDataKit in Frameworks */ = {isa = PBXBuildFile; productRef = 388940A66362A7CE5B4A6AA4 /* BinaryDataKit */; };
 		5E5510000000000000000003 /* sessions-server in Embed Session Server */ = {isa = PBXBuildFile; productRef = 5E5510000000000000000103 /* sessions-server */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		5E5510000000000000000006 /* io.apparata.Sessions.SessionServer.plist in Embed Launch Agent */ = {isa = PBXBuildFile; fileRef = 5E5510000000000000000007 /* io.apparata.Sessions.SessionServer.plist */; };
+		5E5510000000000000000009 /* ShellIntegration in Embed Shell Integration */ = {isa = PBXBuildFile; fileRef = 5E551000000000000000000A /* ShellIntegration */; };
 		88C9FA50C20E5F2B904A2697 /* CollectionKit in Frameworks */ = {isa = PBXBuildFile; productRef = 793C8B286816B4BF80507178 /* CollectionKit */; };
 		91F31A2DCEB9083944EAC89F /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = E9EE0BAF856C69E5C1314FEA /* MarkdownUI */; };
 		9CB9855AED6D8937804CB1F4 /* SettingsUI in Frameworks */ = {isa = PBXBuildFile; productRef = BB32C3A7F5A32E9C6D4BC12C /* SettingsUI */; };
@@ -59,11 +60,23 @@
 			name = "Embed Launch Agent";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		5E551000000000000000000B /* Embed Shell Integration */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 7;
+			files = (
+				5E5510000000000000000009 /* ShellIntegration in Embed Shell Integration */,
+			);
+			name = "Embed Shell Integration";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		5E5510000000000000000004 /* SessionsKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SessionsKit; path = Packages/SessionsKit; sourceTree = SOURCE_ROOT; };
 		5E5510000000000000000007 /* io.apparata.Sessions.SessionServer.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = io.apparata.Sessions.SessionServer.plist; path = LaunchAgents/io.apparata.Sessions.SessionServer.plist; sourceTree = SOURCE_ROOT; };
+		5E551000000000000000000A /* ShellIntegration */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ShellIntegration; path = ShellIntegration; sourceTree = SOURCE_ROOT; };
 		ABCA9000E64F9C230E75FEFA /* Sessions.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sessions.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E8E0F9C9DC9ECBDF264AF1BA /* AppDesign */ = {isa = PBXFileReference; lastKnownFileType = folder; name = AppDesign; path = Packages/AppDesign; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
@@ -131,6 +144,7 @@
 				7105C101A5F88AC6EFBDDF79 /* Packages */,
 				9A33089C05405ADC3E182924 /* Sessions */,
 				5E5510000000000000000007 /* io.apparata.Sessions.SessionServer.plist */,
+				5E551000000000000000000A /* ShellIntegration */,
 				6EA638F4617A9F965FC0F1F0 /* Products */,
 			);
 			indentWidth = 4;
@@ -167,6 +181,7 @@
 				E45392B2B8C5984685B830E4 /* Frameworks */,
 				5E5510000000000000000005 /* Embed Session Server */,
 				5E5510000000000000000008 /* Embed Launch Agent */,
+				5E551000000000000000000B /* Embed Shell Integration */,
 			);
 			buildRules = (
 			);

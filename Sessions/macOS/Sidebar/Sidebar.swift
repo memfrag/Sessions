@@ -21,12 +21,20 @@ struct Sidebar: View {
                 Section(header: Text("Workspaces")) {
                     ForEach(model.workspaces) { workspace in
                         NavigationLink(value: workspace.id) {
-                            Label(workspace.name, systemImage: "terminal")
-                                .badge(
-                                    model.isRootMissing(for: workspace)
-                                        ? Text(Image(systemName: "exclamationmark.triangle.fill"))
-                                        : nil
-                                )
+                            HStack(spacing: 6) {
+                                Label(workspace.name, systemImage: "terminal")
+                                if model.workspaceNeedsAttention(workspace) {
+                                    Image(systemName: "bell.fill")
+                                        .font(.caption2)
+                                        .foregroundStyle(.orange)
+                                        .help("A session needs attention")
+                                }
+                            }
+                            .badge(
+                                model.isRootMissing(for: workspace)
+                                    ? Text(Image(systemName: "exclamationmark.triangle.fill"))
+                                    : nil
+                            )
                         }
                         .contextMenu {
                             Button("Rename…") {

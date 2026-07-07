@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf '\\033]9;Claude needs input\\007' > /dev/tty"
+          }
+        ]
+      }
+    ]
+  }
+}

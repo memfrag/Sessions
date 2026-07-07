@@ -13,9 +13,15 @@ struct SessionsMenuBar: Scene {
     let workspacesModel: WorkspacesModel
 
     var body: some Scene {
-        MenuBarExtra("Sessions", systemImage: "terminal") {
+        MenuBarExtra {
             SessionsMenuBarView()
                 .environment(workspacesModel)
+        } label: {
+            Image(
+                systemName: workspacesModel.anyWorkspaceNeedsAttention
+                    ? "bell.badge.fill"
+                    : "terminal"
+            )
         }
         .menuBarExtraStyle(.window)
     }
@@ -131,6 +137,11 @@ private struct SessionsMenuBarView: View {
                     .foregroundStyle(.secondary)
                 Text(workspace.name)
                     .lineLimit(1)
+                if model.workspaceNeedsAttention(workspace) {
+                    Image(systemName: "bell.fill")
+                        .font(.caption2)
+                        .foregroundStyle(.orange)
+                }
                 Spacer()
                 let live = workspace.sessions.count { $0.isAlive }
                 Text(live > 0 ? "\(live) live" : "\(workspace.sessions.count) tabs")

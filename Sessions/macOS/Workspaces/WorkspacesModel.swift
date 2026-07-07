@@ -189,7 +189,20 @@ final class WorkspacesModel {
 
     func selectSession(id: SessionInfo.ID, in workspaceID: Workspace.ID) {
         selectedSessionIDByWorkspace[workspaceID] = id
-        sessionRegistry.controllerIfExists(for: id)?.clearBell()
+        sessionRegistry.controllerIfExists(for: id)?.clearAttention()
+    }
+
+    /// Whether any session in the workspace wants the user's attention
+    /// (bell or OSC 9 notification, e.g. Claude Code awaiting input).
+    func workspaceNeedsAttention(_ workspace: Workspace) -> Bool {
+        workspace.sessions.contains { session in
+            sessionRegistry.controllerIfExists(for: session.id)?.needsAttention ?? false
+        }
+    }
+
+    /// Whether any session in any workspace wants attention.
+    var anyWorkspaceNeedsAttention: Bool {
+        workspaces.contains { workspaceNeedsAttention($0) }
     }
 
     /// Controller of the currently selected tab, if it exists.

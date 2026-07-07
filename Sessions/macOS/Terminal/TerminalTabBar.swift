@@ -91,11 +91,11 @@ private struct TerminalTabItem: View {
                     .font(.caption2)
                     .foregroundStyle(.orange)
                     .help("Process exited")
-            } else if controller.hasBell && !isSelected {
+            } else if controller.needsAttention && !isSelected {
                 Image(systemName: "bell.fill")
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .help("Bell")
+                    .foregroundStyle(.orange)
+                    .help("Needs attention")
             }
             if isRenaming {
                 TextField("Tab Name", text: $renameText)

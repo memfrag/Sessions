@@ -7,6 +7,26 @@ import SwiftUI
 
 struct GeneralSettingsTab: View {
 
+    /// Claude Code hook that signals "needs attention" via OSC 9 whenever
+    /// Claude asks for input or permission. Written to the controlling
+    /// terminal directly (hook stdout is captured by Claude Code).
+    static let claudeCodeHookSnippet = """
+    {
+      "hooks": {
+        "Notification": [
+          {
+            "hooks": [
+              {
+                "type": "command",
+                "command": "printf '\\u001b]9;Claude needs input\\u0007' > /dev/tty"
+              }
+            ]
+          }
+        ]
+      }
+    }
+    """
+
     /// zsh snippet enabling OSC 7 cwd reporting, modeled on Apple's
     /// /etc/zshrc_Apple_Terminal (byte-wise percent-encoding with
     /// LC_CTYPE=C so UTF-8 paths encode correctly).
@@ -31,13 +51,17 @@ struct GeneralSettingsTab: View {
     fi
     """
 
+    @Environment(AppSettings.self) private var settings
+
     var body: some View {
+        @Bindable var settings = settings
         Form {
             Section("Shell Integration") {
                 Text("""
                 Sessions follows your shell's working directory to open new \
                 tabs in the right place and show the directory in tab \
-                tooltips. Add this to your ~/.zshrc to enable it:
+                tooltips. This is set up automatically for zsh. For other \
+                shells, add the equivalent of this to your shell config:
                 """)
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -57,6 +81,43 @@ struct GeneralSettingsTab: View {
                     pasteboard.clearContents()
                     pasteboard.setString(Self.shellIntegrationSnippet, forType: .string)
                 }
+            }
+            Section("Claude Code Integration") {
+                Text("""
+                When Claude Code needs your input, Sessions highlights the \
+                tab and workspace with a bell badge. In zsh this works \
+                automatically — the `claude` command is wrapped to load the \
+                attention hooks. For other shells, merge this hook into \
+                ~/.claude/settings.json:
+                """)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                ScrollView(.horizontal) {
+                    Text(Self.claudeCodeHookSnippet)
+                        .font(.caption.monospaced())
+                        .textSelection(.enabled)
+                        .padding(8)
+                }
+                .frame(maxHeight: 130)
+                .background(
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.primary.opacity(0.05))
+                )
+                Button("Copy Hook") {
+                    let pasteboard = NSPasteboard.general
+                    pasteboard.clearContents()
+                    pasteboard.setString(Self.claudeCodeHookSnippet, forType: .string)
+                }
+                Toggle(
+                    "Also show Notification Center alerts",
+                    isOn: $settings.attentionNotificationsEnabled
+                )
+                Text("""
+                Any program that rings the terminal bell or sends an OSC 9 \
+                notification triggers the same highlight.
+                """)
+                .font(.caption)
+                .foregroundStyle(.secondary)
             }
         }
         .padding(20)
