@@ -44,14 +44,20 @@ do {
     // probe) may connect. Ad-hoc dev builds suffix the server identifier
     // with a hash, hence the prefix rule.
     //
-    // TODO: pin the Developer ID team at release (teamID: "XXXXXXXXXX").
-    // With ad-hoc signing the identifier is self-assignable and thus
-    // forgeable by a same-user process; a real team ID makes the check
-    // cryptographically unforgeable and is the intended security boundary.
+    // The team is pinned to whatever signed this build: ad-hoc/unsigned
+    // dev builds yield nil (identifier-only, self-assignable), while a
+    // Developer-ID release yields the real team (e.g. Apparata's), making
+    // the check cryptographically unforgeable — a same-user attacker
+    // cannot produce a binary with that team. Self-configuring, so a
+    // plain ad-hoc Release build still works.
+    let teamID = PeerVerifier.ownTeamIdentifier()
+    if let teamID {
+        logger.info("Pinning peer team identifier \(teamID)")
+    }
     let peerPolicy = PeerPolicy.signedClients(
         identifiers: ["io.apparata.Sessions", "sessions-server"],
         identifierPrefixes: ["sessions-server-"],
-        teamID: nil
+        teamID: teamID
     )
     core = try ServerCore(
         socketPath: socketPath,

@@ -28,12 +28,34 @@ public enum PeerPolicy: Sendable {
 /// Verifies connecting peers against a `PeerPolicy` using the socket's
 /// audit token (`LOCAL_PEERTOKEN`), which — unlike PID-based checks — is
 /// immune to PID-reuse races.
-enum PeerVerifier {
+public enum PeerVerifier {
 
     private static let logger = Logger(subsystem: "io.apparata.Sessions", category: "PeerVerifier")
 
     /// `LOCAL_PEERTOKEN` from <sys/un.h>; not exposed to Swift.
     private static let localPeerToken: Int32 = 0x006
+
+    /// This process's own code-signing team identifier, or nil if the
+    /// build is ad-hoc / unsigned (development). Release builds signed
+    /// with Developer ID return the signing team (e.g. Apparata's), which
+    /// the server pins so only same-team binaries may connect.
+    public static func ownTeamIdentifier() -> String? {
+        var code: SecCode?
+        guard SecCodeCopySelf([], &code) == errSecSuccess, let code else {
+            return nil
+        }
+        var staticCode: SecStaticCode?
+        guard SecCodeCopyStaticCode(code, [], &staticCode) == errSecSuccess,
+              let staticCode else {
+            return nil
+        }
+        var info: CFDictionary?
+        guard SecCodeCopySigningInformation(staticCode, [], &info) == errSecSuccess,
+              let dictionary = info as? [CFString: Any] else {
+            return nil
+        }
+        return dictionary[kSecCodeInfoTeamIdentifier] as? String
+    }
 
     static func isAuthorized(fd: Int32, policy: PeerPolicy) -> Bool {
         switch policy {
