@@ -72,6 +72,12 @@ private struct TerminalSessionPage: View {
     var body: some View {
         let controller = model.sessionRegistry.controller(for: session.id)
         TerminalSessionView(controller: controller, isSelected: isSelected && !hasExited)
+            .overlay(alignment: .topTrailing) {
+                if isSelected && controller.isFindBarVisible {
+                    TerminalFindBar(controller: controller)
+                        .padding(8)
+                }
+            }
             .overlay {
                 if hasExited {
                     exitedOverlay

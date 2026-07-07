@@ -9,6 +9,7 @@ struct SettingsWindow: Scene {
 
     private enum Tabs: Hashable {
         case general
+        case appearance
     }
 
     var body: some Scene {
@@ -17,7 +18,7 @@ struct SettingsWindow: Scene {
                 .appEnvironment(.default)
         }
     }
-    
+
     @ViewBuilder var tabs: some View {
         TabView {
             GeneralSettingsTab()
@@ -25,8 +26,13 @@ struct SettingsWindow: Scene {
                     Label("General", systemImage: "gear")
                 }
                 .tag(Tabs.general)
+            AppearanceSettingsTab()
+                .tabItem {
+                    Label("Appearance", systemImage: "paintpalette")
+                }
+                .tag(Tabs.appearance)
         }
         .padding(20)
-        .frame(width: 375, height: 150)
-    }    
+        .frame(width: 460, height: 340)
+    }
 }

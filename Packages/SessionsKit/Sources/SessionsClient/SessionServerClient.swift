@@ -12,6 +12,9 @@ public enum SessionServerClientError: Error {
     case connectionClosed
     case protocolMismatch(serverProtocolVersion: Int)
     case handshakeFailed
+    /// The server accepted the connection but never answered the hello
+    /// (wedged server). The connect loop escalates by killing it.
+    case handshakeTimeout
 }
 
 /// Events surfaced to the app outside of per-session output.
@@ -83,6 +86,13 @@ public actor SessionServerClient {
             protocolVersion: SessionsProtocolInfo.version,
             appVersion: appVersion
         )))
+        // A wedged server accepts connections but never answers the hello;
+        // without a deadline the app would hang here forever.
+        let timeoutTask = Task {
+            try? await Task.sleep(for: .seconds(5))
+            self.failHandshakeIfPending()
+        }
+        defer { timeoutTask.cancel() }
         let reply: ControlMessage = try await withCheckedThrowingContinuation { continuation in
             helloContinuation = continuation
         }
@@ -127,6 +137,14 @@ public actor SessionServerClient {
     private func handleConnectionClosed(_ connection: UnixSocketConnection) {
         guard self.connection === connection else { return }
         disconnectInternal(notify: true)
+    }
+
+    private func failHandshakeIfPending() {
+        guard let continuation = helloContinuation else { return }
+        helloContinuation = nil
+        Self.logger.error("Handshake timed out; server accepted but never answered")
+        continuation.resume(throwing: SessionServerClientError.handshakeTimeout)
+        disconnectInternal(notify: false)
     }
 
     // MARK: - Frame handling
@@ -249,6 +267,12 @@ public actor SessionServerClient {
 
     public func moveSession(id: UUID, toIndex: Int) {
         send(.moveSession(id: id, toIndex: toIndex))
+    }
+
+    /// Reports a session's OSC 7 working directory to the server, which
+    /// prefers it for new-tab cwd inheritance.
+    public func reportCwd(sessionID: UUID, path: String) {
+        send(.sessionCwdChanged(sessionID: sessionID, path: path))
     }
 
     public func requestServerRestart() {

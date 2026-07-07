@@ -184,6 +184,8 @@ public actor ServerCore {
             sessionList.insert(session, at: min(max(0, toIndex), sessionList.count))
             state.workspaces[workspaceIndex].sessions = sessionList
             persistAndBroadcast()
+        case .sessionCwdChanged(let sessionID, let path):
+            await sessions[sessionID]?.noteClientReportedCwd(path)
         case .checkBusy(let sessionID):
             let isBusy = await sessions[sessionID]?.isBusy() ?? false
             connection.send(.control(.busyStatus(sessionID: sessionID, isBusy: isBusy)))
@@ -198,8 +200,9 @@ public actor ServerCore {
         case .resize(let sessionID, let cols, let rows):
             await sessions[sessionID]?.resize(cols: cols, rows: rows)
         case .serverHello, .protocolMismatch, .stateChanged, .attached, .replayDone,
-             .sessionExited, .busyStatus, .error:
-            // Server → client messages; ignore if a client echoes them.
+             .sessionExited, .busyStatus, .error, .unknownMessage:
+            // Server → client messages (or unknown payloads from newer
+            // peers); ignored.
             break
         }
     }
@@ -211,7 +214,7 @@ public actor ServerCore {
         if let existing = sessions[id] {
             return existing
         }
-        let session = SessionActor(id: id) { [weak self] sessionID, exitCode in
+        let session = SessionActor(id: id, serverVersion: serverVersion) { [weak self] sessionID, exitCode in
             Task {
                 await self?.sessionDidExit(id: sessionID, exitCode: exitCode)
             }

@@ -26,6 +26,16 @@ import KeyValueStore
         /// Terminal font size in points.
         case terminalFontSize
 
+        /// Terminal color theme ID.
+        case terminalThemeID
+
+        /// Terminal font family name; empty means the system monospaced
+        /// font (SF Mono).
+        case terminalFontName
+
+        /// Whether to use SwiftTerm's experimental Metal renderer.
+        case useMetalRenderer
+
         // <-- (1 / 3) Add key for new property here
     }
 
@@ -42,6 +52,27 @@ import KeyValueStore
     public var terminalFontSize: Double {
         didSet {
             store.save(terminalFontSize, for: .terminalFontSize)
+        }
+    }
+
+    /// Terminal color theme ID.
+    public var terminalThemeID: String {
+        didSet {
+            store.save(terminalThemeID, for: .terminalThemeID)
+        }
+    }
+
+    /// Terminal font family name; empty means the system monospaced font.
+    public var terminalFontName: String {
+        didSet {
+            store.save(terminalFontName, for: .terminalFontName)
+        }
+    }
+
+    /// Whether to use SwiftTerm's experimental Metal renderer.
+    public var useMetalRenderer: Bool {
+        didSet {
+            store.save(useMetalRenderer, for: .useMetalRenderer)
         }
     }
 
@@ -62,6 +93,9 @@ import KeyValueStore
         self.store = store ?? .defaultStore
         colorScheme = self.store.load(.colorScheme, default: .system)
         terminalFontSize = self.store.load(.terminalFontSize, default: 13)
+        terminalThemeID = self.store.load(.terminalThemeID, default: "system")
+        terminalFontName = self.store.load(.terminalFontName, default: "")
+        useMetalRenderer = self.store.load(.useMetalRenderer, default: false)
 
         // <-- (3 / 3) Add initializer for new property here.
     }

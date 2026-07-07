@@ -50,6 +50,13 @@ public enum ControlMessage: Codable, Sendable, Equatable {
     /// is not the shell itself.
     case busyStatus(sessionID: UUID, isBusy: Bool)
 
+    // MARK: Shell integration
+
+    /// The client's terminal saw an OSC 7 working-directory report for a
+    /// session (client → server). Used to make new-tab cwd inheritance
+    /// precise; runtime-only, never persisted.
+    case sessionCwdChanged(sessionID: UUID, path: String)
+
     // MARK: State sync (server → client)
 
     case stateChanged(ServerState)
@@ -68,6 +75,14 @@ public enum ControlMessage: Codable, Sendable, Equatable {
     // MARK: Errors
 
     case error(code: ErrorCode, message: String)
+
+    // MARK: Decoder fallback
+
+    /// Never sent intentionally. Produced by `FrameDecoder` when a control
+    /// frame's payload does not decode (a message from a newer peer, or
+    /// corruption). Handlers ignore it, which makes additive protocol
+    /// changes non-breaking.
+    case unknownMessage
 }
 
 public enum ErrorCode: String, Codable, Sendable {

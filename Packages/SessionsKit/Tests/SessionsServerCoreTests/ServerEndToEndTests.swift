@@ -176,6 +176,129 @@ struct ServerEndToEndTests {
         #expect(restartedState != nil)
     }
 
+    @Test func cwdInheritancePrefersClientReported() async throws {
+        let paths = makeTempPaths()
+        defer { try? FileManager.default.removeItem(atPath: paths.directory) }
+        let (_, serverTask) = try startServer(socket: paths.socket, state: paths.state)
+        defer { serverTask.cancel() }
+        let (client, _) = try await connectClient(socket: paths.socket)
+
+        await client.createWorkspace(name: "Work", rootPath: "/tmp")
+        let state1 = await waitForState(client) { state in
+            state.workspaces.first.map { !$0.sessions.isEmpty } ?? false
+        }
+        let workspaceID = try #require(state1?.workspaces.first?.id)
+        let sessionA = try #require(state1?.workspaces.first?.sessions.first)
+
+        // Report a distinctive existing directory as session A's cwd.
+        let reportedDir = "\(paths.directory)/reported dir"
+        try FileManager.default.createDirectory(atPath: reportedDir, withIntermediateDirectories: true)
+        await client.reportCwd(sessionID: sessionA.id, path: reportedDir)
+        // Small pause so the fire-and-forget report lands before createSession.
+        try await Task.sleep(for: .milliseconds(200))
+
+        await client.createSession(workspaceID: workspaceID, inheritFromSessionID: sessionA.id)
+        let state2 = await waitForState(client) { state in
+            (state.workspaces.first?.sessions.count ?? 0) >= 2
+        }
+        let newSession = try #require(state2?.workspaces.first?.sessions.last)
+        #expect(newSession.id != sessionA.id)
+
+        let attachment = try await client.attach(sessionID: newSession.id, cols: 80, rows: 24)
+        attachment.sendInput(Array("echo CWD-$PWD-DONE\n".utf8))
+        var collected = [UInt8]()
+        var sawReported = false
+        let deadline = ContinuousClock.now + .seconds(10)
+        for await event in attachment.events {
+            if case .output(let chunk) = event {
+                collected.append(contentsOf: chunk)
+            }
+            // /tmp may resolve to /private/tmp; match on the unique suffix.
+            if String(decoding: collected, as: UTF8.self).contains("reported dir-DONE") {
+                sawReported = true
+                break
+            }
+            if ContinuousClock.now > deadline {
+                break
+            }
+        }
+        #expect(sawReported, "New session should start in the client-reported cwd")
+    }
+
+    @Test func cwdInheritanceFallsBackWhenReportedPathMissing() async throws {
+        let paths = makeTempPaths()
+        defer { try? FileManager.default.removeItem(atPath: paths.directory) }
+        let (_, serverTask) = try startServer(socket: paths.socket, state: paths.state)
+        defer { serverTask.cancel() }
+        let (client, _) = try await connectClient(socket: paths.socket)
+
+        await client.createWorkspace(name: "Work", rootPath: "/tmp")
+        let state1 = await waitForState(client) { state in
+            state.workspaces.first.map { !$0.sessions.isEmpty } ?? false
+        }
+        let workspaceID = try #require(state1?.workspaces.first?.id)
+        let sessionA = try #require(state1?.workspaces.first?.sessions.first)
+
+        await client.reportCwd(sessionID: sessionA.id, path: "/nonexistent/bogus/dir")
+        try await Task.sleep(for: .milliseconds(200))
+        await client.createSession(workspaceID: workspaceID, inheritFromSessionID: sessionA.id)
+        let state2 = await waitForState(client) { state in
+            (state.workspaces.first?.sessions.count ?? 0) >= 2
+        }
+        let newSession = try #require(state2?.workspaces.first?.sessions.last)
+
+        let attachment = try await client.attach(sessionID: newSession.id, cols: 80, rows: 24)
+        attachment.sendInput(Array("echo CWD-$PWD-DONE\n".utf8))
+        var collected = [UInt8]()
+        var text = ""
+        let deadline = ContinuousClock.now + .seconds(10)
+        for await event in attachment.events {
+            if case .output(let chunk) = event {
+                collected.append(contentsOf: chunk)
+            }
+            text = String(decoding: collected, as: UTF8.self)
+            if text.contains("-DONE") && text.contains("CWD-/") {
+                break
+            }
+            if ContinuousClock.now > deadline {
+                break
+            }
+        }
+        #expect(!text.contains("bogus"), "Bogus reported cwd must not be used")
+    }
+
+    @Test func termProgramEnvironmentIsSet() async throws {
+        let paths = makeTempPaths()
+        defer { try? FileManager.default.removeItem(atPath: paths.directory) }
+        let (_, serverTask) = try startServer(socket: paths.socket, state: paths.state)
+        defer { serverTask.cancel() }
+        let (client, _) = try await connectClient(socket: paths.socket)
+
+        await client.createWorkspace(name: "Work", rootPath: "/tmp")
+        let state1 = await waitForState(client) { state in
+            state.workspaces.first.map { !$0.sessions.isEmpty } ?? false
+        }
+        let session = try #require(state1?.workspaces.first?.sessions.first)
+        let attachment = try await client.attach(sessionID: session.id, cols: 80, rows: 24)
+        attachment.sendInput(Array("echo PROG-$TERM_PROGRAM-END\n".utf8))
+        var collected = [UInt8]()
+        var sawProgram = false
+        let deadline = ContinuousClock.now + .seconds(10)
+        for await event in attachment.events {
+            if case .output(let chunk) = event {
+                collected.append(contentsOf: chunk)
+            }
+            if String(decoding: collected, as: UTF8.self).contains("PROG-Sessions-END") {
+                sawProgram = true
+                break
+            }
+            if ContinuousClock.now > deadline {
+                break
+            }
+        }
+        #expect(sawProgram, "Shell should see TERM_PROGRAM=Sessions")
+    }
+
     @Test func busyCheckDetectsForegroundProcess() async throws {
         let paths = makeTempPaths()
         defer { try? FileManager.default.removeItem(atPath: paths.directory) }

@@ -9,7 +9,11 @@ public enum SessionsProtocolInfo {
     /// Bump on any incompatible wire-protocol change. A mismatch during the
     /// handshake makes the app request a server restart, which kills live
     /// sessions (documented, acceptable).
-    public static let version = 1
+    ///
+    /// v2 added `sessionCwdChanged` and tolerant control decoding
+    /// (unknown control payloads decode as `.unknownMessage`). Because of
+    /// the tolerance, purely additive messages no longer require a bump.
+    public static let version = 2
 }
 
 /// Canonical file locations shared by app and server.

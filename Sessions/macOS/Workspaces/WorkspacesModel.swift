@@ -192,6 +192,13 @@ final class WorkspacesModel {
         sessionRegistry.controllerIfExists(for: id)?.clearBell()
     }
 
+    /// Controller of the currently selected tab, if it exists.
+    var selectedTerminalController: TerminalSessionController? {
+        guard let workspace = selectedWorkspace,
+              let sessionID = selectedSessionID(in: workspace) else { return nil }
+        return sessionRegistry.controllerIfExists(for: sessionID)
+    }
+
     // MARK: - Menu command actions (operate on the current selection)
 
     func newTabInSelectedWorkspace() {

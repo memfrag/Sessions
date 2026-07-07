@@ -34,6 +34,11 @@ actor SessionActor {
 
     private var readSource: DispatchSourceRead?
 
+    /// Whether the read source is suspended for backpressure. A suspended
+    /// dispatch source must be resumed before it is cancelled/released,
+    /// or Dispatch traps.
+    private var isReadSourceSuspended = false
+
     private var exitSource: DispatchSourceProcess?
 
     private var outputTask: Task<Void, Never>?
@@ -49,8 +54,16 @@ actor SessionActor {
     /// Called when the shell process exits. Set once by ServerCore.
     private let onExit: @Sendable (UUID, Int32?) -> Void
 
-    init(id: UUID, onExit: @escaping @Sendable (UUID, Int32?) -> Void) {
+    private let serverVersion: String
+
+    /// Working directory most recently reported by the client's terminal
+    /// via OSC 7. Runtime-only; preferred over `proc_pidinfo` for new-tab
+    /// cwd inheritance because it is exact and shell-driven.
+    private var clientReportedCwd: String?
+
+    init(id: UUID, serverVersion: String, onExit: @escaping @Sendable (UUID, Int32?) -> Void) {
         self.id = id
+        self.serverVersion = serverVersion
         self.onExit = onExit
     }
 
@@ -64,7 +77,7 @@ actor SessionActor {
         let pty = try PtyProcess(
             executable: shell,
             args: ["-\(shellName)"],
-            environment: Self.childEnvironment(),
+            environment: Self.childEnvironment(serverVersion: serverVersion),
             currentDirectory: currentDirectory,
             cols: cols,
             rows: rows
@@ -72,6 +85,7 @@ actor SessionActor {
         self.pty = pty
         isAlive = true
         exitCode = nil
+        clientReportedCwd = nil
         ring.clear()
         startReading(pty: pty)
         startExitWatcher(pty: pty)
@@ -88,11 +102,13 @@ actor SessionActor {
         return ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh"
     }
 
-    private static func childEnvironment() -> [String] {
+    private static func childEnvironment(serverVersion: String) -> [String] {
         var result = [
             "TERM=xterm-256color",
             "COLORTERM=truecolor",
-            "LANG=en_US.UTF-8"
+            "LANG=en_US.UTF-8",
+            "TERM_PROGRAM=Sessions",
+            "TERM_PROGRAM_VERSION=\(serverVersion)"
         ]
         let env = ProcessInfo.processInfo.environment
         for key in ["LOGNAME", "USER", "HOME", "TMPDIR"] {
@@ -153,13 +169,22 @@ actor SessionActor {
         // terminal. Nothing is dropped.
         if connection.pendingWriteBytes > Self.backpressureThreshold, let source = readSource {
             source.suspend()
+            isReadSourceSuspended = true
             while connection.pendingWriteBytes > Self.backpressureThreshold / 2 {
                 try? await Task.sleep(for: .milliseconds(50))
                 if attachedConnection !== connection {
                     break
                 }
+                // The session may have been torn down during the sleep
+                // (actor reentrancy); teardown resumed the source already.
+                if !isReadSourceSuspended {
+                    return
+                }
             }
-            source.resume()
+            if isReadSourceSuspended {
+                isReadSourceSuspended = false
+                source.resume()
+            }
         }
     }
 
@@ -207,6 +232,11 @@ actor SessionActor {
     }
 
     private func tearDownSources() {
+        if isReadSourceSuspended {
+            // Cancelling/releasing a suspended source traps in Dispatch.
+            isReadSourceSuspended = false
+            readSource?.resume()
+        }
         readSource?.cancel()
         readSource = nil
         exitSource?.cancel()
@@ -281,10 +311,22 @@ actor SessionActor {
         pty?.isBusy() ?? false
     }
 
-    /// Current working directory of the foreground process, for cwd
-    /// inheritance when opening a new tab.
+    func noteClientReportedCwd(_ path: String) {
+        clientReportedCwd = path
+    }
+
+    /// Current working directory of the session, for cwd inheritance when
+    /// opening a new tab. Prefers the client-reported OSC 7 directory (if
+    /// it still exists), falling back to the foreground process's cwd.
     func currentWorkingDirectory() -> String? {
-        pty?.foregroundWorkingDirectory()
+        if let reported = clientReportedCwd {
+            var isDirectory = ObjCBool(false)
+            if FileManager.default.fileExists(atPath: reported, isDirectory: &isDirectory),
+               isDirectory.boolValue {
+                return reported
+            }
+        }
+        return pty?.foregroundWorkingDirectory()
     }
 
     /// Kills the shell (tab closed or workspace deleted). SIGHUP first;

@@ -22,7 +22,9 @@ struct FrameCodecTests {
             .attach(sessionID: UUID(), cols: 120, rows: 40),
             .sessionExited(sessionID: UUID(), exitCode: 137),
             .error(code: .spawnFailed, message: "nope"),
-            .closeAllSessions
+            .closeAllSessions,
+            .sessionCwdChanged(sessionID: UUID(), path: "/tmp/with space/ünïcode/dir"),
+            .unknownMessage
         ]
         for message in messages {
             let encoded = try FrameEncoder.encode(.control(message))
@@ -107,6 +109,27 @@ struct FrameCodecTests {
         #expect(throws: FrameCodecError.malformedFrame) {
             _ = try decoder.append(wire)
         }
+    }
+
+    @Test func unknownControlPayloadDecodesAsUnknownMessage() throws {
+        // A control message from a hypothetical future protocol version.
+        let futureBody = Array(#"{"someFutureMessage":{"answer":42}}"#.utf8)
+        let length = futureBody.count + 1
+        var wire: [UInt8] = [
+            UInt8((length >> 24) & 0xFF),
+            UInt8((length >> 16) & 0xFF),
+            UInt8((length >> 8) & 0xFF),
+            UInt8(length & 0xFF),
+            FrameType.control.rawValue
+        ]
+        wire.append(contentsOf: futureBody)
+        // A valid frame following the unknown one must still decode:
+        // the stream stays in sync because frames are length-delimited.
+        let followUp = Frame.output(sessionID: UUID(), bytes: [1, 2, 3])
+        wire.append(contentsOf: try FrameEncoder.encode(followUp))
+        var decoder = FrameDecoder()
+        let frames = try decoder.append(wire)
+        #expect(frames == [.control(.unknownMessage), followUp])
     }
 
     @Test func encoderRejectsOversizedFrames() {

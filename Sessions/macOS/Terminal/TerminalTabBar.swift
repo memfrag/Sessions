@@ -69,7 +69,15 @@ private struct TerminalTabItem: View {
     }
 
     private var title: String {
-        session.customTitle ?? controller.shellTitle ?? "Terminal"
+        session.customTitle
+            ?? controller.shellTitle
+            ?? controller.currentDirectory.map { ($0 as NSString).lastPathComponent }
+            ?? "Terminal"
+    }
+
+    private var directoryTooltip: String? {
+        guard let directory = controller.currentDirectory else { return nil }
+        return (directory as NSString).abbreviatingWithTildeInPath
     }
 
     private var hasExited: Bool {
@@ -108,6 +116,7 @@ private struct TerminalTabItem: View {
                     .font(.callout)
                     .lineLimit(1)
                     .truncationMode(.tail)
+                    .help(directoryTooltip ?? title)
             }
             Button {
                 model.requestCloseSession(id: session.id)

@@ -35,6 +35,13 @@ final class TerminalSessionController {
     /// Title reported by the shell via OSC escape sequences, if any.
     private(set) var shellTitle: String?
 
+    /// Working directory reported by the shell via OSC 7, if any.
+    private(set) var currentDirectory: String?
+
+    /// Last cwd forwarded to the server, to avoid resending duplicates
+    /// (replay re-emits every historical OSC 7 sequence).
+    private var lastReportedCwd: String?
+
     /// Mirrored from the server's `SessionInfo`.
     private(set) var isAlive = false
 
@@ -49,6 +56,117 @@ final class TerminalSessionController {
     /// terminal→host traffic is dropped until `replayDone` — otherwise
     /// the responses land at the shell prompt as garbage input.
     private var isReplaying = false
+
+    /// Whether the find bar is shown for this tab (state lives here so it
+    /// survives tab switches).
+    var isFindBarVisible = false
+
+    // MARK: - Find in scrollback
+
+    var findText = "" {
+        didSet {
+            if findText != oldValue {
+                findFailed = false
+            }
+        }
+    }
+
+    var findCaseSensitive = false {
+        didSet {
+            findFailed = false
+        }
+    }
+
+    var findRegex = false {
+        didSet {
+            findFailed = false
+        }
+    }
+
+    /// The last search found no match (also set for invalid regexes).
+    private(set) var findFailed = false
+
+    func showFindBar() {
+        isFindBarVisible = true
+    }
+
+    func hideFindBar() {
+        isFindBarVisible = false
+        findFailed = false
+        terminalView.clearSearch()
+        terminalView.window?.makeFirstResponder(terminalView)
+    }
+
+    func findNext() {
+        guard !findText.isEmpty else { return }
+        let options = SearchOptions(caseSensitive: findCaseSensitive, regex: findRegex)
+        findFailed = !terminalView.findNext(findText, options: options, scrollToResult: true)
+    }
+
+    func findPrevious() {
+        guard !findText.isEmpty else { return }
+        let options = SearchOptions(caseSensitive: findCaseSensitive, regex: findRegex)
+        findFailed = !terminalView.findPrevious(findText, options: options, scrollToResult: true)
+    }
+
+    // MARK: - Appearance
+
+    private var appliedThemeID: String?
+
+    private var metalApplyFailedForSetting: Bool?
+
+    /// Applies theme, font, and margin background. Called from every
+    /// `updateNSView` pass — including for hidden tabs in the ZStack — so
+    /// everything is guarded to be cheap when nothing changed.
+    func applyAppearanceIfNeeded(
+        theme: TerminalTheme,
+        fontName: String,
+        fontSize: CGFloat,
+        container: TerminalContainerView?
+    ) {
+        let resolvedFont = Self.resolveFont(name: fontName, size: fontSize)
+        if terminalView.font != resolvedFont {
+            terminalView.font = resolvedFont
+        }
+        if appliedThemeID != theme.id {
+            appliedThemeID = theme.id
+            theme.apply(to: terminalView, container: container)
+        } else if let container, container.backgroundColor != terminalView.nativeBackgroundColor {
+            container.backgroundColor = terminalView.nativeBackgroundColor
+        }
+    }
+
+    /// Toggles the experimental Metal renderer. On failure, logs once and
+    /// does not retry until the setting changes.
+    func applyRendererIfNeeded(useMetal: Bool) {
+        guard terminalView.window != nil,
+              terminalView.isUsingMetalRenderer != useMetal,
+              metalApplyFailedForSetting != useMetal else {
+            return
+        }
+        do {
+            try terminalView.setUseMetal(useMetal)
+            metalApplyFailedForSetting = nil
+        } catch {
+            metalApplyFailedForSetting = useMetal
+            Self.logger.error("Failed to toggle Metal renderer to \(useMetal): \(error)")
+        }
+    }
+
+    /// Empty name means the system monospaced font (SF Mono). Otherwise
+    /// `name` is a font family; falls back to the system monospaced font
+    /// if the family is no longer installed.
+    private static func resolveFont(name: String, size: CGFloat) -> NSFont {
+        if !name.isEmpty {
+            if let font = NSFontManager.shared.font(withFamily: name, traits: [], weight: 5, size: size) {
+                return font
+            }
+            if let font = NSFont(name: name, size: size) {
+                return font
+            }
+        }
+        return NSFont.monospacedSystemFont(ofSize: size, weight: .regular)
+    }
 
     init(sessionID: SessionInfo.ID, client: SessionServerClient) {
         self.sessionID = sessionID
@@ -85,6 +203,7 @@ final class TerminalSessionController {
                     terminalView.feed(byteArray: chunk[...])
                 case .replayDone:
                     isReplaying = false
+                    reportCwdIfChanged()
                 }
             }
         }
@@ -137,7 +256,35 @@ extension TerminalSessionController: @preconcurrency TerminalViewDelegate {
     }
 
     func hostCurrentDirectoryUpdate(source: TerminalView, directory: String?) {
-        // The server resolves cwd inheritance via the PTY; nothing needed.
+        guard let directory, let path = Self.parseOSC7Path(directory) else { return }
+        currentDirectory = path
+        // During replay, historical OSC 7 sequences fire this repeatedly;
+        // record locally and report once on replayDone instead of spamming
+        // the socket. Live updates are forwarded immediately.
+        if !isReplaying {
+            reportCwdIfChanged()
+        }
+    }
+
+    private func reportCwdIfChanged() {
+        guard let path = currentDirectory, path != lastReportedCwd else { return }
+        lastReportedCwd = path
+        let sessionID = self.sessionID
+        let client = self.client
+        Task {
+            await client.reportCwd(sessionID: sessionID, path: path)
+        }
+    }
+
+    /// Parses an OSC 7 payload. Shells send `file://host/percent-encoded-path`
+    /// by convention, but bare paths occur in the wild.
+    static func parseOSC7Path(_ raw: String) -> String? {
+        if raw.hasPrefix("/") {
+            return raw
+        }
+        guard let url = URL(string: raw), url.scheme == "file" else { return nil }
+        let path = url.path(percentEncoded: false)
+        return path.isEmpty ? nil : path
     }
 
     func scrolled(source: TerminalView, position: Double) {

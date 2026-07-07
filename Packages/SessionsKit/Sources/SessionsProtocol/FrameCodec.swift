@@ -83,7 +83,12 @@ public struct FrameDecoder: Sendable {
                 let message = try JSONDecoder().decode(ControlMessage.self, from: Data(body))
                 return .control(message)
             } catch {
-                throw FrameCodecError.malformedFrame
+                // Control frames are length-delimited, so an undecodable
+                // payload cannot desync the stream. Mapping it to
+                // `.unknownMessage` (instead of dropping the connection)
+                // makes additive protocol changes non-breaking. Genuinely
+                // corrupt JSON also lands here — acceptable.
+                return .control(.unknownMessage)
             }
         case .output, .input:
             guard body.count >= 16 else {

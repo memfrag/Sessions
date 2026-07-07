@@ -6,7 +6,8 @@ import AppKit
 import SwiftTerm
 import SwiftUI
 
-/// Hosts the controller-owned SwiftTerm terminal view in SwiftUI.
+/// Hosts the controller-owned SwiftTerm terminal view in SwiftUI, inset by
+/// a small margin inside a background-matching container.
 struct TerminalSessionView: NSViewRepresentable {
 
     @Environment(AppSettings.self) private var settings
@@ -17,25 +18,40 @@ struct TerminalSessionView: NSViewRepresentable {
     /// keyboard focus.
     let isSelected: Bool
 
-    func makeNSView(context: Context) -> TerminalView {
+    func makeNSView(context: Context) -> TerminalContainerView {
+        let container = TerminalContainerView()
         let terminalView = controller.terminalView
-        applyFont(to: terminalView)
-        return terminalView
+        container.addSubview(terminalView)
+        container.hostedView = terminalView
+        applyAppearance(container: container)
+        return container
     }
 
-    func updateNSView(_ nsView: TerminalView, context: Context) {
-        applyFont(to: nsView)
-        guard isSelected else { return }
+    func updateNSView(_ nsView: TerminalContainerView, context: Context) {
+        // The controller keeps one terminal view for the session's lifetime;
+        // if SwiftUI hands this representable a recycled container, re-home it.
+        let terminalView = controller.terminalView
+        if terminalView.superview !== nsView {
+            terminalView.removeFromSuperview()
+            nsView.addSubview(terminalView)
+            nsView.hostedView = terminalView
+        }
+        applyAppearance(container: nsView)
+        guard isSelected, !controller.isFindBarVisible else { return }
         DispatchQueue.main.async {
-            guard let window = nsView.window, window.firstResponder !== nsView else { return }
-            window.makeFirstResponder(nsView)
+            guard let window = terminalView.window,
+                  window.firstResponder !== terminalView else { return }
+            window.makeFirstResponder(terminalView)
         }
     }
 
-    private func applyFont(to terminalView: TerminalView) {
-        let size = CGFloat(settings.terminalFontSize)
-        if terminalView.font.pointSize != size {
-            terminalView.font = NSFont.monospacedSystemFont(ofSize: size, weight: .regular)
-        }
+    private func applyAppearance(container: TerminalContainerView) {
+        controller.applyAppearanceIfNeeded(
+            theme: TerminalTheme.theme(withID: settings.terminalThemeID),
+            fontName: settings.terminalFontName,
+            fontSize: CGFloat(settings.terminalFontSize),
+            container: container
+        )
+        controller.applyRendererIfNeeded(useMetal: settings.useMetalRenderer)
     }
 }

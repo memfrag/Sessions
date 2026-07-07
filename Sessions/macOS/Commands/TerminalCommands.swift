@@ -47,6 +47,26 @@ struct TerminalCommands: Commands {
             .keyboardShortcut("w", modifiers: [.command, .shift])
         }
 
+        CommandGroup(after: .textEditing) {
+            Button("Find…") {
+                model?.selectedTerminalController?.showFindBar()
+            }
+            .keyboardShortcut("f", modifiers: .command)
+            .disabled(model?.selectedTerminalController == nil)
+
+            Button("Find Next") {
+                model?.selectedTerminalController?.findNext()
+            }
+            .keyboardShortcut("g", modifiers: .command)
+            .disabled(model?.selectedTerminalController == nil)
+
+            Button("Find Previous") {
+                model?.selectedTerminalController?.findPrevious()
+            }
+            .keyboardShortcut("g", modifiers: [.command, .shift])
+            .disabled(model?.selectedTerminalController == nil)
+        }
+
         CommandMenu("Tabs") {
             Button("Next Tab") {
                 model?.selectAdjacentTab(offset: 1)
