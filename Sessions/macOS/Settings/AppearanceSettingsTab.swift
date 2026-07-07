@@ -15,25 +15,6 @@ struct AppearanceSettingsTab: View {
     var body: some View {
         @Bindable var settings = settings
         Form {
-            Section("Theme") {
-                Picker("Theme:", selection: $settings.terminalThemeID) {
-                    ForEach(TerminalTheme.presets) { theme in
-                        HStack(spacing: 6) {
-                            // Plain shape fills only: no Slider, no materials
-                            // (RenderBox crash constraint on macOS 26.4).
-                            HStack(spacing: 2) {
-                                ForEach(theme.swatchColors, id: \.self) { hex in
-                                    RoundedRectangle(cornerRadius: 2)
-                                        .fill(Color(nsColor: NSColor(hexString: hex) ?? .textBackgroundColor))
-                                        .frame(width: 10, height: 10)
-                                }
-                            }
-                            Text(theme.name)
-                        }
-                        .tag(theme.id)
-                    }
-                }
-            }
             Section("Font") {
                 Picker("Font:", selection: $settings.terminalFontName) {
                     Text("SF Mono (System)").tag("")

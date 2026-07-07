@@ -50,6 +50,15 @@ final class TerminalSessionController {
     /// A BEL arrived while this tab was in the background.
     private(set) var hasBell = false
 
+    /// An OSC 9 notification arrived (e.g. a Claude Code hook signaling
+    /// that it needs input).
+    private(set) var hasNotification = false
+
+    /// Whether this tab wants the user's attention (bell or notification).
+    var needsAttention: Bool {
+        hasBell || hasNotification
+    }
+
     /// While the server replays scrollback, the terminal re-parses old
     /// query sequences (e.g. Device Attributes) and generates responses.
     /// Those queries were answered when they originally arrived, so all
@@ -111,7 +120,7 @@ final class TerminalSessionController {
 
     // MARK: - Appearance
 
-    private var appliedThemeID: String?
+    private var appliedTheme: TerminalTheme?
 
     private var metalApplyFailedForSetting: Bool?
 
@@ -176,8 +185,8 @@ final class TerminalSessionController {
         if terminalView.font != resolvedFont {
             terminalView.font = resolvedFont
         }
-        if appliedThemeID != theme.id {
-            appliedThemeID = theme.id
+        if appliedTheme != theme {
+            appliedTheme = theme
             theme.apply(to: terminalView, container: container)
         } else if let container, container.backgroundColor != terminalView.nativeBackgroundColor {
             container.backgroundColor = terminalView.nativeBackgroundColor
@@ -221,6 +230,26 @@ final class TerminalSessionController {
         self.client = client
         terminalView = TerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
         terminalView.terminalDelegate = self
+        // OSC 9 (iTerm2/kitty notification convention): used by tools like
+        // Claude Code hooks to signal "needs attention". The handler fires
+        // synchronously during feed() on the main actor.
+        terminalView.getTerminal().registerOscHandler(code: 9) { [weak self] payload in
+            MainActor.assumeIsolated {
+                self?.noteNotification(message: String(bytes: payload, encoding: .utf8))
+            }
+        }
+    }
+
+    private func noteNotification(message: String?) {
+        // Historical OSC 9 sequences re-fire during scrollback replay;
+        // they were handled when they originally arrived.
+        guard !isReplaying else { return }
+        hasNotification = true
+        let title = shellTitle
+            ?? currentDirectory.map { ($0 as NSString).lastPathComponent }
+            ?? "Terminal"
+        let body = (message?.isEmpty ?? true) ? "A session needs attention" : message ?? ""
+        AttentionNotifier.post(title: title, body: body)
     }
 
     /// Attaches (or re-attaches) to the session. The terminal is reset
@@ -277,8 +306,9 @@ final class TerminalSessionController {
         self.exitCode = exitCode ?? -1
     }
 
-    func clearBell() {
+    func clearAttention() {
         hasBell = false
+        hasNotification = false
     }
 
     /// Never started since the server booted (fresh boot or reboot), as
@@ -292,6 +322,10 @@ extension TerminalSessionController: @preconcurrency TerminalViewDelegate {
 
     func send(source: TerminalView, data: ArraySlice<UInt8>) {
         guard !isReplaying else { return }
+        // The user is interacting with this tab; attention is served.
+        if needsAttention {
+            clearAttention()
+        }
         attachment?.sendInput(Array(data))
     }
 

@@ -10,6 +10,7 @@ struct SettingsWindow: Scene {
     private enum Tabs: Hashable {
         case general
         case appearance
+        case theme
     }
 
     var body: some Scene {
@@ -28,9 +29,14 @@ struct SettingsWindow: Scene {
                 .tag(Tabs.general)
             AppearanceSettingsTab()
                 .tabItem {
-                    Label("Appearance", systemImage: "paintpalette")
+                    Label("Appearance", systemImage: "textformat.size")
                 }
                 .tag(Tabs.appearance)
+            ThemeSettingsTab()
+                .tabItem {
+                    Label("Theme", systemImage: "paintpalette")
+                }
+                .tag(Tabs.theme)
         }
         .padding(20)
         .frame(width: 460, height: 480)

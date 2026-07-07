@@ -52,6 +52,13 @@ import KeyValueStore
         /// Whether the terminal cursor blinks.
         case terminalCursorBlinks
 
+        /// Per-theme user color overrides, keyed by theme ID.
+        case terminalThemeOverrides
+
+        /// Whether OSC 9 attention notifications also post to
+        /// Notification Center.
+        case attentionNotificationsEnabled
+
         // <-- (1 / 3) Add key for new property here
     }
 
@@ -129,6 +136,21 @@ import KeyValueStore
         }
     }
 
+    /// Per-theme user color overrides, keyed by theme ID.
+    var terminalThemeOverrides: [String: TerminalThemeOverride] {
+        didSet {
+            store.save(terminalThemeOverrides, for: .terminalThemeOverrides)
+        }
+    }
+
+    /// Whether OSC 9 attention notifications also post to
+    /// Notification Center.
+    public var attentionNotificationsEnabled: Bool {
+        didSet {
+            store.save(attentionNotificationsEnabled, for: .attentionNotificationsEnabled)
+        }
+    }
+
     // <-- (2 / 3) Add property for new property here
 
     // MARK: Setup
@@ -154,6 +176,8 @@ import KeyValueStore
         terminalTabStopWidth = self.store.load(.terminalTabStopWidth, default: 8)
         terminalCursorShape = self.store.load(.terminalCursorShape, default: "block")
         terminalCursorBlinks = self.store.load(.terminalCursorBlinks, default: true)
+        terminalThemeOverrides = self.store.load(.terminalThemeOverrides, default: [:])
+        attentionNotificationsEnabled = self.store.load(.attentionNotificationsEnabled, default: false)
 
         // <-- (3 / 3) Add initializer for new property here.
     }

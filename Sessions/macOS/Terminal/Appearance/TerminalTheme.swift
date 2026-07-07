@@ -34,32 +34,34 @@ struct TerminalTheme: Identifiable, Hashable {
 
     /// Applies the theme to a terminal view and syncs the margin
     /// container's background to the terminal background.
+    ///
+    /// The system theme starts from macOS-native colors; any non-empty
+    /// hex fields (user overrides) then win over the defaults. Custom
+    /// themes always carry non-empty fields, so both share one code path.
     @MainActor
     func apply(to terminalView: TerminalView, container: TerminalContainerView?) {
         if isSystem {
             terminalView.configureNativeColors()
-            terminalView.installColors(Self.swiftTermColors(from: Self.xterm16))
             terminalView.caretColor = .textColor
             terminalView.caretTextColor = nil
             terminalView.selectedTextBackgroundColor = .selectedTextBackgroundColor
-        } else {
-            let colors = Self.swiftTermColors(from: ansi)
-            if colors.count == 16 {
-                terminalView.installColors(colors)
-            }
-            if let color = NSColor(hexString: foreground) {
-                terminalView.nativeForegroundColor = color
-            }
-            if let color = NSColor(hexString: background) {
-                terminalView.nativeBackgroundColor = color
-            }
-            if let color = NSColor(hexString: cursor) {
-                terminalView.caretColor = color
-            }
-            terminalView.caretTextColor = NSColor(hexString: background)
-            if let color = NSColor(hexString: selection) {
-                terminalView.selectedTextBackgroundColor = color
-            }
+        }
+        let colors = Self.swiftTermColors(from: ansi.isEmpty ? Self.xterm16 : ansi)
+        if colors.count == 16 {
+            terminalView.installColors(colors)
+        }
+        if let color = NSColor(hexString: foreground) {
+            terminalView.nativeForegroundColor = color
+        }
+        if let color = NSColor(hexString: background) {
+            terminalView.nativeBackgroundColor = color
+            terminalView.caretTextColor = color
+        }
+        if let color = NSColor(hexString: cursor) {
+            terminalView.caretColor = color
+        }
+        if let color = NSColor(hexString: selection) {
+            terminalView.selectedTextBackgroundColor = color
         }
         container?.backgroundColor = terminalView.nativeBackgroundColor
     }
