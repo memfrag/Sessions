@@ -75,7 +75,7 @@ private struct SessionsMenuBarView: View {
                 // Detaches only; shells keep running in the server.
                 NSApplication.shared.terminate(nil)
             } label: {
-                Label("Quit Sessions", systemImage: "power")
+                Label("Quit App", systemImage: "power")
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
             }
