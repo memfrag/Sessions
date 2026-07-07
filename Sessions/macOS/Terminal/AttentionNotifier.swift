@@ -18,13 +18,13 @@ enum AttentionNotifier {
 
     private static var didRequestAuthorization = false
 
-    /// The bundled "blop", loaded once. Played directly rather than via the
-    /// notification's sound: UNNotificationSound resolution and macOS's
-    /// per-app sound caching proved unreliable for a custom bundled sound,
-    /// so we own playback and keep the notification itself silent.
-    private static let blop: NSSound? = {
+    /// The bundled attention sound, loaded once. Played directly rather
+    /// than via the notification's sound: UNNotificationSound resolution
+    /// and macOS's per-app sound caching proved unreliable for a custom
+    /// bundled sound, so we own playback and keep the notification silent.
+    private static let attentionSound: NSSound? = {
         let url = Bundle.main.bundleURL
-            .appending(path: "Contents/Library/Sounds/Blop.caf")
+            .appending(path: "Contents/Library/Sounds/Attention.caf")
         return NSSound(contentsOf: url, byReference: true)
     }()
 
@@ -32,8 +32,8 @@ enum AttentionNotifier {
         let settings = AppEnvironment.default.appSettings
         guard settings.attentionNotificationsEnabled else { return }
         if settings.attentionNotificationSoundEnabled {
-            blop?.stop()
-            blop?.play()
+            attentionSound?.stop()
+            attentionSound?.play()
         }
         let center = UNUserNotificationCenter.current()
         if !didRequestAuthorization {
