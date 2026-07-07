@@ -1,0 +1,82 @@
+//
+//  Copyright © 2026 Apparata AB. All rights reserved.
+//
+
+import SwiftUI
+
+// MARK: - Focused values
+
+extension FocusedValues {
+    /// The workspaces model of the focused main window, for menu commands.
+    @Entry var workspacesModel: WorkspacesModel?
+}
+
+// MARK: - Commands
+
+/// File-menu and Tabs-menu commands for workspaces and terminal tabs.
+struct TerminalCommands: Commands {
+
+    @FocusedValue(\.workspacesModel) private var model
+
+    var body: some Commands {
+
+        CommandGroup(replacing: .newItem) {
+            Button("New Workspace…") {
+                model?.isNewWorkspaceSheetPresented = true
+            }
+            .keyboardShortcut("n", modifiers: [.command, .shift])
+            .disabled(model == nil)
+
+            Button("New Tab") {
+                model?.newTabInSelectedWorkspace()
+            }
+            .keyboardShortcut("t", modifiers: .command)
+            .disabled(model?.selectedWorkspace == nil)
+        }
+
+        CommandGroup(replacing: .saveItem) {
+            Button("Close Tab") {
+                model?.closeSelectedTab()
+            }
+            .keyboardShortcut("w", modifiers: .command)
+            .disabled(model?.selectedWorkspace?.sessions.isEmpty ?? true)
+
+            Button("Close Window") {
+                NSApplication.shared.keyWindow?.performClose(nil)
+            }
+            .keyboardShortcut("w", modifiers: [.command, .shift])
+        }
+
+        CommandMenu("Tabs") {
+            Button("Next Tab") {
+                model?.selectAdjacentTab(offset: 1)
+            }
+            .keyboardShortcut("]", modifiers: [.command, .shift])
+            .disabled((model?.selectedWorkspace?.sessions.count ?? 0) < 2)
+
+            Button("Previous Tab") {
+                model?.selectAdjacentTab(offset: -1)
+            }
+            .keyboardShortcut("[", modifiers: [.command, .shift])
+            .disabled((model?.selectedWorkspace?.sessions.count ?? 0) < 2)
+
+            Divider()
+
+            ForEach(1...9, id: \.self) { number in
+                Button("Tab \(number)") {
+                    model?.selectTab(atIndex: number - 1)
+                }
+                .keyboardShortcut(KeyEquivalent(Character("\(number)")), modifiers: .command)
+                .disabled((model?.selectedWorkspace?.sessions.count ?? 0) < number)
+            }
+        }
+
+        CommandGroup(after: .appTermination) {
+            Button("Quit and Stop All Sessions") {
+                model?.serverManager.closeAllSessionsAndQuit()
+            }
+            .keyboardShortcut("q", modifiers: [.command, .option])
+            .disabled(model == nil)
+        }
+    }
+}

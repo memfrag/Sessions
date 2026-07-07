@@ -1,0 +1,79 @@
+//
+//  Copyright © 2026 Apparata AB. All rights reserved.
+//
+
+import Foundation
+
+/// Control-plane messages exchanged between the app and the session server.
+///
+/// Encoded as JSON inside a control frame. High-rate terminal I/O does not
+/// use control messages; it travels in binary output/input frames.
+public enum ControlMessage: Codable, Sendable, Equatable {
+
+    // MARK: Handshake / server lifecycle
+
+    case clientHello(protocolVersion: Int, appVersion: String)
+    case serverHello(protocolVersion: Int, serverVersion: String, state: ServerState)
+    case protocolMismatch(serverProtocolVersion: Int)
+    /// Server persists state and exits with code 1, so launchd relaunches
+    /// the (possibly updated) binary.
+    case restartServer
+    /// Server persists state and exits with code 0, staying down.
+    case shutdown
+
+    // MARK: Workspace CRUD
+
+    case createWorkspace(name: String, rootPath: String)
+    case renameWorkspace(id: UUID, name: String)
+    case deleteWorkspace(id: UUID)
+    case moveWorkspace(id: UUID, toIndex: Int)
+
+    // MARK: Session (tab) CRUD
+
+    /// Spawns a new session. The working directory is inherited from
+    /// `inheritFromSessionID`'s foreground process when possible, falling
+    /// back to the workspace root, then the home directory.
+    case createSession(workspaceID: UUID, inheritFromSessionID: UUID?)
+    case closeSession(id: UUID)
+    /// Kills all shells and removes all tabs; workspaces remain.
+    /// Used by "Quit and Stop All Sessions".
+    case closeAllSessions
+    case renameSession(id: UUID, customTitle: String?)
+    /// Respawns the shell of a dead session.
+    case restartSession(id: UUID)
+    case moveSession(id: UUID, toIndex: Int)
+
+    // MARK: Busy check (close confirmation)
+
+    case checkBusy(sessionID: UUID)
+    /// Reply to `checkBusy`. Busy means the PTY's foreground process group
+    /// is not the shell itself.
+    case busyStatus(sessionID: UUID, isBusy: Bool)
+
+    // MARK: State sync (server → client)
+
+    case stateChanged(ServerState)
+
+    // MARK: Attachment & terminal control
+
+    case attach(sessionID: UUID, cols: Int, rows: Int)
+    case detach(sessionID: UUID)
+    /// Sent in response to `attach`, followed by `replayBytes` bytes of
+    /// scrollback in output frames, then `replayDone`.
+    case attached(sessionID: UUID, isAlive: Bool, replayBytes: Int)
+    case replayDone(sessionID: UUID)
+    case resize(sessionID: UUID, cols: Int, rows: Int)
+    case sessionExited(sessionID: UUID, exitCode: Int32?)
+
+    // MARK: Errors
+
+    case error(code: ErrorCode, message: String)
+}
+
+public enum ErrorCode: String, Codable, Sendable {
+    case unknownWorkspace
+    case unknownSession
+    case spawnFailed
+    case detachedByOtherClient
+    case invalidMessage
+}

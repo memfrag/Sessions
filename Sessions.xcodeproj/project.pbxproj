@@ -1,0 +1,792 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0A17174825FCE9FCC81CA7C9 /* TextToolbox in Frameworks */ = {isa = PBXBuildFile; productRef = C20A783F5F3F4F849194E997 /* TextToolbox */; };
+		29739C08E86A383D5BADB0ED /* KeyValueStore in Frameworks */ = {isa = PBXBuildFile; productRef = E0D91C68B9900145857412CF /* KeyValueStore */; };
+		37036EE0D99F7034F0DB5B12 /* URLToolbox in Frameworks */ = {isa = PBXBuildFile; productRef = 9D239BD600BD76353036F1E2 /* URLToolbox */; };
+		3BB8C838867D235CF80873FC /* MathKit in Frameworks */ = {isa = PBXBuildFile; productRef = DDE17AAE5F2CFACF75EFE51D /* MathKit */; };
+		415059F32FFD6AEC00D4C4B5 /* SwiftTerm in Frameworks */ = {isa = PBXBuildFile; productRef = 415059F22FFD6AEC00D4C4B5 /* SwiftTerm */; };
+		41505DB22FFD7E3F00D4C4B5 /* SessionsProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 5E5510000000000000000101 /* SessionsProtocol */; };
+		41505DB32FFD7E3F00D4C4B5 /* SessionsClient in Frameworks */ = {isa = PBXBuildFile; productRef = 5E5510000000000000000102 /* SessionsClient */; };
+		41505DB42FFD7E3F00D4C4B5 /* sessions-server in Frameworks */ = {isa = PBXBuildFile; productRef = 5E5510000000000000000103 /* sessions-server */; };
+		4913FB2D61D2ED26C8A56D2C /* Constructs in Frameworks */ = {isa = PBXBuildFile; productRef = F168078E0611B5307598889D /* Constructs */; };
+		58B5CA104CDF1B309FCC060E /* MessagePackKit in Frameworks */ = {isa = PBXBuildFile; productRef = 2E585A5805F8B14BE7EE930F /* MessagePackKit */; };
+		5DAFC4B707DCD6CECA1FD7A9 /* BinaryDataKit in Frameworks */ = {isa = PBXBuildFile; productRef = 388940A66362A7CE5B4A6AA4 /* BinaryDataKit */; };
+		5E5510000000000000000003 /* sessions-server in Embed Session Server */ = {isa = PBXBuildFile; productRef = 5E5510000000000000000103 /* sessions-server */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		5E5510000000000000000006 /* io.apparata.Sessions.SessionServer.plist in Embed Launch Agent */ = {isa = PBXBuildFile; fileRef = 5E5510000000000000000007 /* io.apparata.Sessions.SessionServer.plist */; };
+		88C9FA50C20E5F2B904A2697 /* CollectionKit in Frameworks */ = {isa = PBXBuildFile; productRef = 793C8B286816B4BF80507178 /* CollectionKit */; };
+		91F31A2DCEB9083944EAC89F /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = E9EE0BAF856C69E5C1314FEA /* MarkdownUI */; };
+		9CB9855AED6D8937804CB1F4 /* SettingsUI in Frameworks */ = {isa = PBXBuildFile; productRef = BB32C3A7F5A32E9C6D4BC12C /* SettingsUI */; };
+		A8F3B0CD7CB56135D464AC9F /* SensibleStyling in Frameworks */ = {isa = PBXBuildFile; productRef = DFD41A3872771E9834B3E938 /* SensibleStyling */; };
+		A92E98893C910939CF91D88B /* Markin in Frameworks */ = {isa = PBXBuildFile; productRef = 68FF9A453C1D55E4630242F6 /* Markin */; };
+		B06E62D932AD81085192F338 /* Zipcode in Frameworks */ = {isa = PBXBuildFile; productRef = A4E1C33BC27AF32C45B9D8CC /* Zipcode */; };
+		D0FE70FD07696348ACF81040 /* AppDesign in Frameworks */ = {isa = PBXBuildFile; productRef = 5D7979A4F0377547F01960BF /* AppDesign */; };
+		DEBFB46A38B926A7244C4289 /* AppRouting in Frameworks */ = {isa = PBXBuildFile; productRef = 7AFA89182EC7C4FD14077901 /* AppRouting */; };
+		E3E5BD130BD458718FA7B211 /* SystemKit in Frameworks */ = {isa = PBXBuildFile; productRef = 9399B8BE2E3362B3BD1B9640 /* SystemKit */; };
+		E5157EBA4C0A9E51FA6D6ABC /* CGMath in Frameworks */ = {isa = PBXBuildFile; productRef = 9ADC02B582195A054193C20D /* CGMath */; };
+		E5D3B49808096CB6CDC424E6 /* UserDefaultsUI in Frameworks */ = {isa = PBXBuildFile; productRef = BE9EFDAF398A7BC883E8AA65 /* UserDefaultsUI */; };
+		F44652A8FEB10645006B7D11 /* SwiftUIToolbox in Frameworks */ = {isa = PBXBuildFile; productRef = 13D93CAD371298F125992360 /* SwiftUIToolbox */; };
+		FB053AA26CEF5CE505DFD613 /* AttributionsUI in Frameworks */ = {isa = PBXBuildFile; productRef = 0A1D8CF1A0622AAC216CB60D /* AttributionsUI */; };
+		FDDF54A5B317A1233ECE4E91 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = D89F6916E0DF80BA09EF03B6 /* Sparkle */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		5E5510000000000000000005 /* Embed Session Server */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 6;
+			files = (
+				5E5510000000000000000003 /* sessions-server in Embed Session Server */,
+			);
+			name = "Embed Session Server";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5E5510000000000000000008 /* Embed Launch Agent */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = Contents/Library/LaunchAgents;
+			dstSubfolderSpec = 1;
+			files = (
+				5E5510000000000000000006 /* io.apparata.Sessions.SessionServer.plist in Embed Launch Agent */,
+			);
+			name = "Embed Launch Agent";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		5E5510000000000000000004 /* SessionsKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SessionsKit; path = Packages/SessionsKit; sourceTree = SOURCE_ROOT; };
+		5E5510000000000000000007 /* io.apparata.Sessions.SessionServer.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = io.apparata.Sessions.SessionServer.plist; path = LaunchAgents/io.apparata.Sessions.SessionServer.plist; sourceTree = SOURCE_ROOT; };
+		ABCA9000E64F9C230E75FEFA /* Sessions.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sessions.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E8E0F9C9DC9ECBDF264AF1BA /* AppDesign */ = {isa = PBXFileReference; lastKnownFileType = folder; name = AppDesign; path = Packages/AppDesign; sourceTree = SOURCE_ROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		A2216EA2DF74798DF22A8B7A /* Exceptions for "Sessions" folder in "Sessions" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				macOS/Info.plist,
+			);
+			target = E840764EA56ACEA4D3E39C62 /* Sessions */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		9A33089C05405ADC3E182924 /* Sessions */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A2216EA2DF74798DF22A8B7A /* Exceptions for "Sessions" folder in "Sessions" target */,
+			);
+			path = Sessions;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		E45392B2B8C5984685B830E4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				41505DB42FFD7E3F00D4C4B5 /* sessions-server in Frameworks */,
+				41505DB32FFD7E3F00D4C4B5 /* SessionsClient in Frameworks */,
+				41505DB22FFD7E3F00D4C4B5 /* SessionsProtocol in Frameworks */,
+				415059F32FFD6AEC00D4C4B5 /* SwiftTerm in Frameworks */,
+				D0FE70FD07696348ACF81040 /* AppDesign in Frameworks */,
+				FDDF54A5B317A1233ECE4E91 /* Sparkle in Frameworks */,
+				DEBFB46A38B926A7244C4289 /* AppRouting in Frameworks */,
+				FB053AA26CEF5CE505DFD613 /* AttributionsUI in Frameworks */,
+				5DAFC4B707DCD6CECA1FD7A9 /* BinaryDataKit in Frameworks */,
+				E5157EBA4C0A9E51FA6D6ABC /* CGMath in Frameworks */,
+				88C9FA50C20E5F2B904A2697 /* CollectionKit in Frameworks */,
+				4913FB2D61D2ED26C8A56D2C /* Constructs in Frameworks */,
+				29739C08E86A383D5BADB0ED /* KeyValueStore in Frameworks */,
+				91F31A2DCEB9083944EAC89F /* MarkdownUI in Frameworks */,
+				A92E98893C910939CF91D88B /* Markin in Frameworks */,
+				3BB8C838867D235CF80873FC /* MathKit in Frameworks */,
+				58B5CA104CDF1B309FCC060E /* MessagePackKit in Frameworks */,
+				A8F3B0CD7CB56135D464AC9F /* SensibleStyling in Frameworks */,
+				9CB9855AED6D8937804CB1F4 /* SettingsUI in Frameworks */,
+				F44652A8FEB10645006B7D11 /* SwiftUIToolbox in Frameworks */,
+				E3E5BD130BD458718FA7B211 /* SystemKit in Frameworks */,
+				0A17174825FCE9FCC81CA7C9 /* TextToolbox in Frameworks */,
+				37036EE0D99F7034F0DB5B12 /* URLToolbox in Frameworks */,
+				E5D3B49808096CB6CDC424E6 /* UserDefaultsUI in Frameworks */,
+				B06E62D932AD81085192F338 /* Zipcode in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		302D1B87EE9E15C62C0A711A = {
+			isa = PBXGroup;
+			children = (
+				7105C101A5F88AC6EFBDDF79 /* Packages */,
+				9A33089C05405ADC3E182924 /* Sessions */,
+				5E5510000000000000000007 /* io.apparata.Sessions.SessionServer.plist */,
+				6EA638F4617A9F965FC0F1F0 /* Products */,
+			);
+			indentWidth = 4;
+			sourceTree = "<group>";
+			tabWidth = 4;
+			usesTabs = 0;
+		};
+		6EA638F4617A9F965FC0F1F0 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				ABCA9000E64F9C230E75FEFA /* Sessions.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		7105C101A5F88AC6EFBDDF79 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				E8E0F9C9DC9ECBDF264AF1BA /* AppDesign */,
+				5E5510000000000000000004 /* SessionsKit */,
+			);
+			path = Packages;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		E840764EA56ACEA4D3E39C62 /* Sessions */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 18A16382ECA4BAB3086FB3D2 /* Build configuration list for PBXNativeTarget "Sessions" */;
+			buildPhases = (
+				1C0A9F6DAC3253D45DCB2C9F /* Sources */,
+				BDE21A06B87B1AC25A0CBC64 /* Resources */,
+				E45392B2B8C5984685B830E4 /* Frameworks */,
+				5E5510000000000000000005 /* Embed Session Server */,
+				5E5510000000000000000008 /* Embed Launch Agent */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				9A33089C05405ADC3E182924 /* Sessions */,
+			);
+			name = Sessions;
+			packageProductDependencies = (
+				5D7979A4F0377547F01960BF /* AppDesign */,
+				D89F6916E0DF80BA09EF03B6 /* Sparkle */,
+				7AFA89182EC7C4FD14077901 /* AppRouting */,
+				0A1D8CF1A0622AAC216CB60D /* AttributionsUI */,
+				388940A66362A7CE5B4A6AA4 /* BinaryDataKit */,
+				9ADC02B582195A054193C20D /* CGMath */,
+				793C8B286816B4BF80507178 /* CollectionKit */,
+				F168078E0611B5307598889D /* Constructs */,
+				E0D91C68B9900145857412CF /* KeyValueStore */,
+				E9EE0BAF856C69E5C1314FEA /* MarkdownUI */,
+				68FF9A453C1D55E4630242F6 /* Markin */,
+				DDE17AAE5F2CFACF75EFE51D /* MathKit */,
+				2E585A5805F8B14BE7EE930F /* MessagePackKit */,
+				DFD41A3872771E9834B3E938 /* SensibleStyling */,
+				BB32C3A7F5A32E9C6D4BC12C /* SettingsUI */,
+				13D93CAD371298F125992360 /* SwiftUIToolbox */,
+				9399B8BE2E3362B3BD1B9640 /* SystemKit */,
+				C20A783F5F3F4F849194E997 /* TextToolbox */,
+				9D239BD600BD76353036F1E2 /* URLToolbox */,
+				BE9EFDAF398A7BC883E8AA65 /* UserDefaultsUI */,
+				A4E1C33BC27AF32C45B9D8CC /* Zipcode */,
+				415059F22FFD6AEC00D4C4B5 /* SwiftTerm */,
+				5E5510000000000000000101 /* SessionsProtocol */,
+				5E5510000000000000000102 /* SessionsClient */,
+				5E5510000000000000000103 /* sessions-server */,
+			);
+			productName = Sessions;
+			productReference = ABCA9000E64F9C230E75FEFA /* Sessions.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		28CDDB962A88920081926C14 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				ORGANIZATIONNAME = "Apparata AB";
+			};
+			buildConfigurationList = 1E41232628534A713A43C2E2 /* Build configuration list for PBXProject "Sessions" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 302D1B87EE9E15C62C0A711A;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				8613BFD81ABBC3B013587211 /* XCRemoteSwiftPackageReference "AppRouting" */,
+				188E61CBD6AF20A9EB5EAFAB /* XCRemoteSwiftPackageReference "AttributionsUI" */,
+				BE316D15FEDDDAB865FC5E81 /* XCRemoteSwiftPackageReference "BinaryDataKit" */,
+				560FB537F7B87E04FD3F1A1B /* XCRemoteSwiftPackageReference "CGMath" */,
+				1288C91ED24D209069FE0393 /* XCRemoteSwiftPackageReference "CollectionKit" */,
+				A22640CB61D384DD4A5E3A66 /* XCRemoteSwiftPackageReference "Constructs" */,
+				7CD235ABC818C717D25D6298 /* XCRemoteSwiftPackageReference "KeyValueStore" */,
+				C5C0F958C0D2C6B615C5E0DD /* XCRemoteSwiftPackageReference "MarkdownUI" */,
+				109ECCB873116326AF0F3B74 /* XCRemoteSwiftPackageReference "Markin" */,
+				CB66139501D0BAAE39CDD837 /* XCRemoteSwiftPackageReference "MathKit" */,
+				3F757B009D50C43177F627C4 /* XCRemoteSwiftPackageReference "MessagePackKit" */,
+				5F325253390D2B4A634050C7 /* XCRemoteSwiftPackageReference "SensibleStyling" */,
+				C6FF89CB4A7A2A3F398B22D8 /* XCRemoteSwiftPackageReference "SettingsUI" */,
+				75993EB6E2EEBD56C8521EC9 /* XCRemoteSwiftPackageReference "Sparkle" */,
+				5400339AAF4971B843013CCA /* XCRemoteSwiftPackageReference "SwiftUIToolbox" */,
+				2D2DE4DD01E949FB6A743D72 /* XCRemoteSwiftPackageReference "SystemKit" */,
+				5135A5EBC969A38D7F9E8442 /* XCRemoteSwiftPackageReference "TextToolbox" */,
+				72B57F9590A75C8874667362 /* XCRemoteSwiftPackageReference "URLToolbox" */,
+				0C6962277A9F257B95EBF318 /* XCRemoteSwiftPackageReference "UserDefaultsUI" */,
+				62451142C5660967C26D0EC9 /* XCRemoteSwiftPackageReference "Zipcode" */,
+				57D1154F9110282A72B445D2 /* XCLocalSwiftPackageReference "Packages/AppDesign" */,
+				415059F12FFD6AEC00D4C4B5 /* XCRemoteSwiftPackageReference "SwiftTerm" */,
+				5E5510000000000000000201 /* XCLocalSwiftPackageReference "Packages/SessionsKit" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 6EA638F4617A9F965FC0F1F0 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				E840764EA56ACEA4D3E39C62 /* Sessions */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		BDE21A06B87B1AC25A0CBC64 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		1C0A9F6DAC3253D45DCB2C9F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		68222913360BC12063E8672B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Apparata AB. All rights reserved.";
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.2;
+			};
+			name = Debug;
+		};
+		7A86BB56855F221B20611C77 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Apparata AB. All rights reserved.";
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.2;
+			};
+			name = Release;
+		};
+		B2B914FCD5ADA79977B8326F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = DefaultAppIcon;
+				CODE_SIGN_IDENTITY = "-";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1.0.0;
+				DEVELOPMENT_ASSET_PATHS = "\"Sessions/Preview Content\"";
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_BITCODE = NO;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Sessions/macOS/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.apparata.Sessions;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		F0A9E98A1571082C3B3A7401 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = DefaultAppIcon;
+				CODE_SIGN_IDENTITY = "-";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1.0.0;
+				DEVELOPMENT_ASSET_PATHS = "\"Sessions/Preview Content\"";
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_BITCODE = NO;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Sessions/macOS/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.apparata.Sessions;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		18A16382ECA4BAB3086FB3D2 /* Build configuration list for PBXNativeTarget "Sessions" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B2B914FCD5ADA79977B8326F /* Debug */,
+				F0A9E98A1571082C3B3A7401 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		1E41232628534A713A43C2E2 /* Build configuration list for PBXProject "Sessions" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				68222913360BC12063E8672B /* Debug */,
+				7A86BB56855F221B20611C77 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		57D1154F9110282A72B445D2 /* XCLocalSwiftPackageReference "Packages/AppDesign" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/AppDesign;
+		};
+		5E5510000000000000000201 /* XCLocalSwiftPackageReference "Packages/SessionsKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/SessionsKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		0C6962277A9F257B95EBF318 /* XCRemoteSwiftPackageReference "UserDefaultsUI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apparata/UserDefaultsUI.git";
+			requirement = {
+				kind = exactVersion;
+				version = 1.0.1;
+			};
+		};
+		109ECCB873116326AF0F3B74 /* XCRemoteSwiftPackageReference "Markin" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apparata/Markin.git";
+			requirement = {
+				kind = exactVersion;
+				version = 1.0.1;
+			};
+		};
+		1288C91ED24D209069FE0393 /* XCRemoteSwiftPackageReference "CollectionKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apparata/CollectionKit.git";
+			requirement = {
+				kind = exactVersion;
+				version = 1.1.1;
+			};
+		};
+		188E61CBD6AF20A9EB5EAFAB /* XCRemoteSwiftPackageReference "AttributionsUI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apparata/AttributionsUI.git";
+			requirement = {
+				kind = exactVersion;
+				version = 1.1.1;
+			};
+		};
+		2D2DE4DD01E949FB6A743D72 /* XCRemoteSwiftPackageReference "SystemKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apparata/SystemKit.git";
+			requirement = {
+				kind = exactVersion;
+				version = 1.8.0;
+			};
+		};
+		3F757B009D50C43177F627C4 /* XCRemoteSwiftPackageReference "MessagePackKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apparata/MessagePackKit.git";
+			requirement = {
+				kind = exactVersion;
+				version = 1.4.1;
+			};
+		};
+		415059F12FFD6AEC00D4C4B5 /* XCRemoteSwiftPackageReference "SwiftTerm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/migueldeicaza/SwiftTerm.git";
+			requirement = {
+				kind = exactVersion;
+				version = 1.13.0;
+			};
+		};
+		5135A5EBC969A38D7F9E8442 /* XCRemoteSwiftPackageReference "TextToolbox" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apparata/TextToolbox.git";
+			requirement = {
+				kind = exactVersion;
+				version = 1.4.0;
+			};
+		};
+		5400339AAF4971B843013CCA /* XCRemoteSwiftPackageReference "SwiftUIToolbox" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apparata/SwiftUIToolbox.git";
+			requirement = {
+				kind = exactVersion;
+				version = 2.0.0;
+			};
+		};
+		560FB537F7B87E04FD3F1A1B /* XCRemoteSwiftPackageReference "CGMath" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apparata/CGMath.git";
+			requirement = {
+				kind = exactVersion;
+				version = 1.1.2;
+			};
+		};
+		5F325253390D2B4A634050C7 /* XCRemoteSwiftPackageReference "SensibleStyling" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apparata/SensibleStyling.git";
+			requirement = {
+				kind = exactVersion;
+				version = 0.2.1;
+			};
+		};
+		62451142C5660967C26D0EC9 /* XCRemoteSwiftPackageReference "Zipcode" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apparata/Zipcode.git";
+			requirement = {
+				kind = exactVersion;
+				version = 1.0.1;
+			};
+		};
+		72B57F9590A75C8874667362 /* XCRemoteSwiftPackageReference "URLToolbox" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apparata/URLToolbox.git";
+			requirement = {
+				kind = exactVersion;
+				version = 1.3.1;
+			};
+		};
+		75993EB6E2EEBD56C8521EC9 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = exactVersion;
+				version = 2.9.1;
+			};
+		};
+		7CD235ABC818C717D25D6298 /* XCRemoteSwiftPackageReference "KeyValueStore" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apparata/KeyValueStore.git";
+			requirement = {
+				kind = exactVersion;
+				version = 1.0.2;
+			};
+		};
+		8613BFD81ABBC3B013587211 /* XCRemoteSwiftPackageReference "AppRouting" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apparata/AppRouting.git";
+			requirement = {
+				kind = exactVersion;
+				version = 0.9.2;
+			};
+		};
+		A22640CB61D384DD4A5E3A66 /* XCRemoteSwiftPackageReference "Constructs" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apparata/Constructs.git";
+			requirement = {
+				kind = exactVersion;
+				version = 2.1.2;
+			};
+		};
+		BE316D15FEDDDAB865FC5E81 /* XCRemoteSwiftPackageReference "BinaryDataKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apparata/BinaryDataKit.git";
+			requirement = {
+				kind = exactVersion;
+				version = 1.0.7;
+			};
+		};
+		C5C0F958C0D2C6B615C5E0DD /* XCRemoteSwiftPackageReference "MarkdownUI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apparata/MarkdownUI.git";
+			requirement = {
+				kind = exactVersion;
+				version = 0.9.1;
+			};
+		};
+		C6FF89CB4A7A2A3F398B22D8 /* XCRemoteSwiftPackageReference "SettingsUI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apparata/SettingsUI.git";
+			requirement = {
+				kind = exactVersion;
+				version = 1.1.5;
+			};
+		};
+		CB66139501D0BAAE39CDD837 /* XCRemoteSwiftPackageReference "MathKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apparata/MathKit.git";
+			requirement = {
+				kind = exactVersion;
+				version = 2.2.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		0A1D8CF1A0622AAC216CB60D /* AttributionsUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 188E61CBD6AF20A9EB5EAFAB /* XCRemoteSwiftPackageReference "AttributionsUI" */;
+			productName = AttributionsUI;
+		};
+		13D93CAD371298F125992360 /* SwiftUIToolbox */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5400339AAF4971B843013CCA /* XCRemoteSwiftPackageReference "SwiftUIToolbox" */;
+			productName = SwiftUIToolbox;
+		};
+		2E585A5805F8B14BE7EE930F /* MessagePackKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3F757B009D50C43177F627C4 /* XCRemoteSwiftPackageReference "MessagePackKit" */;
+			productName = MessagePackKit;
+		};
+		388940A66362A7CE5B4A6AA4 /* BinaryDataKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = BE316D15FEDDDAB865FC5E81 /* XCRemoteSwiftPackageReference "BinaryDataKit" */;
+			productName = BinaryDataKit;
+		};
+		415059F22FFD6AEC00D4C4B5 /* SwiftTerm */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 415059F12FFD6AEC00D4C4B5 /* XCRemoteSwiftPackageReference "SwiftTerm" */;
+			productName = SwiftTerm;
+		};
+		5D7979A4F0377547F01960BF /* AppDesign */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AppDesign;
+		};
+		5E5510000000000000000101 /* SessionsProtocol */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SessionsProtocol;
+		};
+		5E5510000000000000000102 /* SessionsClient */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SessionsClient;
+		};
+		5E5510000000000000000103 /* sessions-server */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = "sessions-server";
+		};
+		68FF9A453C1D55E4630242F6 /* Markin */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 109ECCB873116326AF0F3B74 /* XCRemoteSwiftPackageReference "Markin" */;
+			productName = Markin;
+		};
+		793C8B286816B4BF80507178 /* CollectionKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1288C91ED24D209069FE0393 /* XCRemoteSwiftPackageReference "CollectionKit" */;
+			productName = CollectionKit;
+		};
+		7AFA89182EC7C4FD14077901 /* AppRouting */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8613BFD81ABBC3B013587211 /* XCRemoteSwiftPackageReference "AppRouting" */;
+			productName = AppRouting;
+		};
+		9399B8BE2E3362B3BD1B9640 /* SystemKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2D2DE4DD01E949FB6A743D72 /* XCRemoteSwiftPackageReference "SystemKit" */;
+			productName = SystemKit;
+		};
+		9ADC02B582195A054193C20D /* CGMath */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 560FB537F7B87E04FD3F1A1B /* XCRemoteSwiftPackageReference "CGMath" */;
+			productName = CGMath;
+		};
+		9D239BD600BD76353036F1E2 /* URLToolbox */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 72B57F9590A75C8874667362 /* XCRemoteSwiftPackageReference "URLToolbox" */;
+			productName = URLToolbox;
+		};
+		A4E1C33BC27AF32C45B9D8CC /* Zipcode */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 62451142C5660967C26D0EC9 /* XCRemoteSwiftPackageReference "Zipcode" */;
+			productName = Zipcode;
+		};
+		BB32C3A7F5A32E9C6D4BC12C /* SettingsUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C6FF89CB4A7A2A3F398B22D8 /* XCRemoteSwiftPackageReference "SettingsUI" */;
+			productName = SettingsUI;
+		};
+		BE9EFDAF398A7BC883E8AA65 /* UserDefaultsUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0C6962277A9F257B95EBF318 /* XCRemoteSwiftPackageReference "UserDefaultsUI" */;
+			productName = UserDefaultsUI;
+		};
+		C20A783F5F3F4F849194E997 /* TextToolbox */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5135A5EBC969A38D7F9E8442 /* XCRemoteSwiftPackageReference "TextToolbox" */;
+			productName = TextToolbox;
+		};
+		D89F6916E0DF80BA09EF03B6 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 75993EB6E2EEBD56C8521EC9 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+		DDE17AAE5F2CFACF75EFE51D /* MathKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CB66139501D0BAAE39CDD837 /* XCRemoteSwiftPackageReference "MathKit" */;
+			productName = MathKit;
+		};
+		DFD41A3872771E9834B3E938 /* SensibleStyling */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5F325253390D2B4A634050C7 /* XCRemoteSwiftPackageReference "SensibleStyling" */;
+			productName = SensibleStyling;
+		};
+		E0D91C68B9900145857412CF /* KeyValueStore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7CD235ABC818C717D25D6298 /* XCRemoteSwiftPackageReference "KeyValueStore" */;
+			productName = KeyValueStore;
+		};
+		E9EE0BAF856C69E5C1314FEA /* MarkdownUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C5C0F958C0D2C6B615C5E0DD /* XCRemoteSwiftPackageReference "MarkdownUI" */;
+			productName = MarkdownUI;
+		};
+		F168078E0611B5307598889D /* Constructs */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A22640CB61D384DD4A5E3A66 /* XCRemoteSwiftPackageReference "Constructs" */;
+			productName = Constructs;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 28CDDB962A88920081926C14 /* Project object */;
+}

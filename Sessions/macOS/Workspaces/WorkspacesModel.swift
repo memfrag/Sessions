@@ -1,0 +1,233 @@
+//
+//  Copyright © 2026 Apparata AB. All rights reserved.
+//
+
+import Foundation
+import Observation
+import SessionsProtocol
+
+/// Observable mirror of the server's workspace/session state, plus local
+/// selection. All mutations are forwarded to the server; updated state
+/// flows back via `stateChanged` broadcasts.
+@Observable @MainActor
+final class WorkspacesModel {
+
+    private(set) var workspaces: [Workspace] = []
+
+    var selectedWorkspaceID: Workspace.ID?
+
+    /// Remembered tab selection per workspace.
+    private var selectedSessionIDByWorkspace: [Workspace.ID: SessionInfo.ID] = [:]
+
+    // MARK: UI state driven by menu commands and confirmation flows
+
+    var isNewWorkspaceSheetPresented = false
+
+    /// Tab close awaiting user confirmation because the session is busy.
+    var sessionPendingClose: SessionInfo.ID?
+
+    /// Workspace deletion awaiting user confirmation (has live sessions).
+    var workspacePendingDelete: Workspace.ID?
+
+    let serverManager: ServerManager
+
+    let sessionRegistry: TerminalSessionRegistry
+
+    init(serverManager: ServerManager) {
+        self.serverManager = serverManager
+        sessionRegistry = TerminalSessionRegistry(client: serverManager.client)
+        serverManager.onStateChanged = { [weak self] state in
+            self?.apply(state)
+        }
+        serverManager.onSessionExited = { [weak self] sessionID, exitCode in
+            self?.sessionRegistry.noteExited(sessionID: sessionID, exitCode: exitCode)
+        }
+        serverManager.onConnected = { [weak self] in
+            self?.sessionRegistry.reattachAll()
+        }
+        serverManager.start()
+    }
+
+    // MARK: - Lookup
+
+    var selectedWorkspace: Workspace? {
+        workspaces.first { $0.id == selectedWorkspaceID }
+    }
+
+    func selectedSessionID(in workspace: Workspace) -> SessionInfo.ID? {
+        if let sessionID = selectedSessionIDByWorkspace[workspace.id],
+           workspace.sessions.contains(where: { $0.id == sessionID }) {
+            return sessionID
+        }
+        return workspace.sessions.first?.id
+    }
+
+    // MARK: - State sync
+
+    private func apply(_ state: ServerState) {
+        let previousSessionIDs = Set(workspaces.flatMap { $0.sessions.map(\.id) })
+        workspaces = state.workspaces
+        // Keep a valid workspace selection.
+        if selectedWorkspaceID == nil || !workspaces.contains(where: { $0.id == selectedWorkspaceID }) {
+            selectedWorkspaceID = workspaces.first?.id
+        }
+        // Select newly created tabs in their workspace.
+        for workspace in workspaces {
+            if let newSession = workspace.sessions.last(where: { !previousSessionIDs.contains($0.id) }) {
+                selectedSessionIDByWorkspace[workspace.id] = newSession.id
+            }
+        }
+        sessionRegistry.sync(with: state)
+    }
+
+    // MARK: - Workspace CRUD (forwarded to server)
+
+    func createWorkspace(name: String, rootPath: String) {
+        Task {
+            await serverManager.client.createWorkspace(name: name, rootPath: rootPath)
+        }
+    }
+
+    func renameWorkspace(id: Workspace.ID, name: String) {
+        Task {
+            await serverManager.client.renameWorkspace(id: id, name: name)
+        }
+    }
+
+    func deleteWorkspace(id: Workspace.ID) {
+        Task {
+            await serverManager.client.deleteWorkspace(id: id)
+        }
+    }
+
+    /// Deletes immediately if the workspace has no live sessions; otherwise
+    /// asks for confirmation first.
+    func requestDeleteWorkspace(id: Workspace.ID) {
+        let hasLiveSessions = workspaces
+            .first { $0.id == id }?
+            .sessions.contains { $0.isAlive } ?? false
+        if hasLiveSessions {
+            workspacePendingDelete = id
+        } else {
+            deleteWorkspace(id: id)
+        }
+    }
+
+    func moveWorkspace(id: Workspace.ID, toIndex: Int) {
+        Task {
+            await serverManager.client.moveWorkspace(id: id, toIndex: toIndex)
+        }
+    }
+
+    // MARK: - Session (tab) CRUD (forwarded to server)
+
+    /// Opens a new tab, inheriting the current working directory of the
+    /// selected tab when possible.
+    func createSession(in workspaceID: Workspace.ID) {
+        let inheritFrom = workspaces
+            .first { $0.id == workspaceID }
+            .flatMap { selectedSessionID(in: $0) }
+        Task {
+            await serverManager.client.createSession(
+                workspaceID: workspaceID,
+                inheritFromSessionID: inheritFrom
+            )
+        }
+    }
+
+    func closeSession(id: SessionInfo.ID) {
+        Task {
+            await serverManager.client.closeSession(id: id)
+        }
+    }
+
+    /// Closes immediately if the session is dead or its shell is idle;
+    /// asks for confirmation if a foreground process is running.
+    func requestCloseSession(id: SessionInfo.ID) {
+        guard let located = findSession(id: id), located.session.isAlive else {
+            closeSession(id: id)
+            return
+        }
+        Task {
+            let isBusy = await serverManager.client.checkBusy(sessionID: id)
+            if isBusy {
+                sessionPendingClose = id
+            } else {
+                closeSession(id: id)
+            }
+        }
+    }
+
+    private func findSession(id: SessionInfo.ID) -> (workspace: Workspace, session: SessionInfo)? {
+        for workspace in workspaces {
+            if let session = workspace.sessions.first(where: { $0.id == id }) {
+                return (workspace, session)
+            }
+        }
+        return nil
+    }
+
+    func renameSession(id: SessionInfo.ID, customTitle: String?) {
+        let title = customTitle?.trimmingCharacters(in: .whitespaces)
+        let resolved = (title?.isEmpty ?? true) ? nil : title
+        Task {
+            await serverManager.client.renameSession(id: id, customTitle: resolved)
+        }
+    }
+
+    func restartSession(id: SessionInfo.ID) {
+        Task {
+            await serverManager.client.restartSession(id: id)
+        }
+    }
+
+    func moveSession(id: SessionInfo.ID, toIndex: Int) {
+        Task {
+            await serverManager.client.moveSession(id: id, toIndex: toIndex)
+        }
+    }
+
+    func selectSession(id: SessionInfo.ID, in workspaceID: Workspace.ID) {
+        selectedSessionIDByWorkspace[workspaceID] = id
+        sessionRegistry.controllerIfExists(for: id)?.clearBell()
+    }
+
+    // MARK: - Menu command actions (operate on the current selection)
+
+    func newTabInSelectedWorkspace() {
+        guard let workspace = selectedWorkspace else { return }
+        createSession(in: workspace.id)
+    }
+
+    func closeSelectedTab() {
+        guard let workspace = selectedWorkspace,
+              let sessionID = selectedSessionID(in: workspace) else { return }
+        requestCloseSession(id: sessionID)
+    }
+
+    func selectAdjacentTab(offset: Int) {
+        guard let workspace = selectedWorkspace,
+              !workspace.sessions.isEmpty,
+              let currentID = selectedSessionID(in: workspace),
+              let currentIndex = workspace.sessions.firstIndex(where: { $0.id == currentID }) else {
+            return
+        }
+        let count = workspace.sessions.count
+        let nextIndex = (currentIndex + offset + count) % count
+        selectSession(id: workspace.sessions[nextIndex].id, in: workspace.id)
+    }
+
+    func selectTab(atIndex index: Int) {
+        guard let workspace = selectedWorkspace,
+              workspace.sessions.indices.contains(index) else { return }
+        selectSession(id: workspace.sessions[index].id, in: workspace.id)
+    }
+
+    /// Whether the workspace's root directory is missing on disk (shown as
+    /// a warning badge; new tabs fall back to the home directory).
+    func isRootMissing(for workspace: Workspace) -> Bool {
+        var isDirectory = ObjCBool(false)
+        let exists = FileManager.default.fileExists(atPath: workspace.rootPath, isDirectory: &isDirectory)
+        return !(exists && isDirectory.boolValue)
+    }
+}
