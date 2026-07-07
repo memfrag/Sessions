@@ -34,7 +34,9 @@ extension MacAppDelegate: UNUserNotificationCenterDelegate {
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
-        completionHandler([.banner, .list, .sound])
+        // Sound is played directly by AttentionNotifier, so the notification
+        // presentation stays silent.
+        completionHandler([.banner, .list])
     }
 }
 

@@ -2,6 +2,7 @@
 //  Copyright © 2026 Apparata AB. All rights reserved.
 //
 
+import AppKit
 import Foundation
 import OSLog
 import UserNotifications
@@ -17,9 +18,23 @@ enum AttentionNotifier {
 
     private static var didRequestAuthorization = false
 
+    /// The bundled "blop", loaded once. Played directly rather than via the
+    /// notification's sound: UNNotificationSound resolution and macOS's
+    /// per-app sound caching proved unreliable for a custom bundled sound,
+    /// so we own playback and keep the notification itself silent.
+    private static let blop: NSSound? = {
+        let url = Bundle.main.bundleURL
+            .appending(path: "Contents/Library/Sounds/Blop.caf")
+        return NSSound(contentsOf: url, byReference: true)
+    }()
+
     static func post(title: String, body: String) {
         let settings = AppEnvironment.default.appSettings
         guard settings.attentionNotificationsEnabled else { return }
+        if settings.attentionNotificationSoundEnabled {
+            blop?.stop()
+            blop?.play()
+        }
         let center = UNUserNotificationCenter.current()
         if !didRequestAuthorization {
             didRequestAuthorization = true
@@ -34,10 +49,8 @@ enum AttentionNotifier {
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
-        // Bundled subtle "blop" (Sessions/macOS/Sounds/Blop.caf).
-        content.sound = settings.attentionNotificationSoundEnabled
-            ? UNNotificationSound(named: UNNotificationSoundName("Blop.caf"))
-            : nil
+        // The sound is played by us (above), so the notification is silent.
+        content.sound = nil
         let request = UNNotificationRequest(
             identifier: UUID().uuidString,
             content: content,
