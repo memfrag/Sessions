@@ -7,19 +7,20 @@ import SwiftUI
 
 struct GeneralSettingsTab: View {
 
-    /// Claude Code hook that signals "needs attention" via OSC 9 whenever
-    /// Claude asks for input or permission. Written to the controlling
-    /// terminal directly (hook stdout is captured by Claude Code).
+    /// Claude Code hook that signals "needs attention" via OSC 9. Hooks run
+    /// detached from the controlling terminal, so this writes to the
+    /// terminal device by the path captured in SESSIONS_TTY (set by the
+    /// shell integration), falling back to /dev/tty.
     static let claudeCodeHookSnippet = """
     {
       "hooks": {
         "Notification": [
           { "hooks": [ { "type": "command",
-            "command": "printf '\\u001b]9;Claude needs input\\u0007' > /dev/tty" } ] }
+            "command": "printf '\\\\033]9;Claude needs input\\\\007' > \\"${SESSIONS_TTY:-/dev/tty}\\"" } ] }
         ],
         "Stop": [
           { "hooks": [ { "type": "command",
-            "command": "printf '\\u001b]9;Claude is done\\u0007' > /dev/tty" } ] }
+            "command": "printf '\\\\033]9;Claude is done\\\\007' > \\"${SESSIONS_TTY:-/dev/tty}\\"" } ] }
         ]
       }
     }
@@ -31,6 +32,7 @@ struct GeneralSettingsTab: View {
     static let shellIntegrationSnippet = """
     # Sessions terminal: report working directory via OSC 7
     if [[ "$TERM_PROGRAM" == "Sessions" ]]; then
+        export SESSIONS_TTY="$(tty 2>/dev/null)"
         __sessions_update_cwd() {
             local url_path='' i ch hexch LC_CTYPE=C LC_COLLATE=C LC_ALL= LANG=
             for ((i = 1; i <= ${#PWD}; ++i)); do

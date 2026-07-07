@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "printf '\\033]9;Claude needs input\\007' > /dev/tty"
+            "command": "printf '\\033]9;Claude needs input\\007' > \"${SESSIONS_TTY:-/dev/tty}\""
           }
         ]
       }
@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "printf '\\033]9;Claude is done\\007' > /dev/tty"
+            "command": "printf '\\033]9;Claude is done\\007' > \"${SESSIONS_TTY:-/dev/tty}\""
           }
         ]
       }

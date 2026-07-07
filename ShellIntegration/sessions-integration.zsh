@@ -8,6 +8,12 @@
 
 if [[ "$TERM_PROGRAM" == "Sessions" ]]; then
 
+    # Capture this shell's terminal device path so tools whose subprocesses
+    # are detached from the controlling terminal (e.g. Claude Code hooks,
+    # which cannot use /dev/tty) can still write escape sequences back to
+    # the terminal by explicit path.
+    export SESSIONS_TTY="$(tty 2>/dev/null)"
+
     __sessions_update_cwd() {
         local url_path='' i ch hexch LC_CTYPE=C LC_COLLATE=C LC_ALL= LANG=
         for ((i = 1; i <= ${#PWD}; ++i)); do
