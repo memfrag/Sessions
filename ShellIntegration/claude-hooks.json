@@ -9,6 +9,16 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf '\\033]9;Claude is done\\007' > /dev/tty"
+          }
+        ]
+      }
     ]
   }
 }

@@ -54,11 +54,19 @@ do {
     if let teamID {
         logger.info("Pinning peer team identifier \(teamID)")
     }
-    let peerPolicy = PeerPolicy.signedClients(
+    var peerPolicy = PeerPolicy.signedClients(
         identifiers: ["io.apparata.Sessions", "sessions-server"],
         identifierPrefixes: ["sessions-server-"],
         teamID: teamID
     )
+    #if DEBUG
+    // Dev/test escape hatch: accept any same-user process so local tooling
+    // (socket probes, harnesses) can connect. Never compiled into release.
+    if ProcessInfo.processInfo.environment["SESSIONS_INSECURE_SOCKET"] == "1" {
+        logger.info("SESSIONS_INSECURE_SOCKET set: accepting any same-user peer")
+        peerPolicy = .sameUserOnly
+    }
+    #endif
     core = try ServerCore(
         socketPath: socketPath,
         statePath: statePath,

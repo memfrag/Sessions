@@ -55,7 +55,7 @@ private struct SessionsMenuBarView: View {
             Button {
                 openMainWindow()
             } label: {
-                Label("Open Sessions", systemImage: "macwindow")
+                Label("Open Window", systemImage: "macwindow")
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
             }

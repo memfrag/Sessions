@@ -47,12 +47,18 @@ final class TerminalSessionRegistry {
 
     /// Mirrors server state into controllers and drops controllers for
     /// sessions that no longer exist.
+    ///
+    /// A controller is created (and attached) for *every* session, not
+    /// just the visible one, so background tabs and non-selected
+    /// workspaces still catch attention signals (bell, OSC 9) from tools
+    /// like Claude Code running in them.
     func sync(with state: ServerState) {
         var seen = Set<SessionInfo.ID>()
         for workspace in state.workspaces {
             for session in workspace.sessions {
                 seen.insert(session.id)
-                controllers[session.id]?.applyInfo(session)
+                let controller = controller(for: session.id)
+                controller.applyInfo(session)
             }
         }
         for (id, controller) in controllers where !seen.contains(id) {

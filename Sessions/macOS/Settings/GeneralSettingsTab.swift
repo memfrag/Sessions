@@ -14,14 +14,12 @@ struct GeneralSettingsTab: View {
     {
       "hooks": {
         "Notification": [
-          {
-            "hooks": [
-              {
-                "type": "command",
-                "command": "printf '\\u001b]9;Claude needs input\\u0007' > /dev/tty"
-              }
-            ]
-          }
+          { "hooks": [ { "type": "command",
+            "command": "printf '\\u001b]9;Claude needs input\\u0007' > /dev/tty" } ] }
+        ],
+        "Stop": [
+          { "hooks": [ { "type": "command",
+            "command": "printf '\\u001b]9;Claude is done\\u0007' > /dev/tty" } ] }
         ]
       }
     }
