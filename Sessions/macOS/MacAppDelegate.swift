@@ -34,7 +34,7 @@ extension MacAppDelegate: UNUserNotificationCenterDelegate {
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
-        completionHandler([.banner, .list])
+        completionHandler([.banner, .list, .sound])
     }
 }
 
