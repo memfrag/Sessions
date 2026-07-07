@@ -76,7 +76,7 @@
 /* Begin PBXFileReference section */
 		5E5510000000000000000004 /* SessionsKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SessionsKit; path = Packages/SessionsKit; sourceTree = SOURCE_ROOT; };
 		5E5510000000000000000007 /* io.apparata.Sessions.SessionServer.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = io.apparata.Sessions.SessionServer.plist; path = LaunchAgents/io.apparata.Sessions.SessionServer.plist; sourceTree = SOURCE_ROOT; };
-		5E551000000000000000000A /* ShellIntegration */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ShellIntegration; path = ShellIntegration; sourceTree = SOURCE_ROOT; };
+		5E551000000000000000000A /* ShellIntegration */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ShellIntegration; sourceTree = SOURCE_ROOT; };
 		ABCA9000E64F9C230E75FEFA /* Sessions.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sessions.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E8E0F9C9DC9ECBDF264AF1BA /* AppDesign */ = {isa = PBXFileReference; lastKnownFileType = folder; name = AppDesign; path = Packages/AppDesign; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */

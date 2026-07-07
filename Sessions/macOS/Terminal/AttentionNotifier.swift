@@ -34,7 +34,10 @@ enum AttentionNotifier {
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
-        content.sound = settings.attentionNotificationSoundEnabled ? .default : nil
+        // Bundled subtle "blop" (Sessions/macOS/Sounds/Blop.caf).
+        content.sound = settings.attentionNotificationSoundEnabled
+            ? UNNotificationSound(named: UNNotificationSoundName("Blop.caf"))
+            : nil
         let request = UNNotificationRequest(
             identifier: UUID().uuidString,
             content: content,
