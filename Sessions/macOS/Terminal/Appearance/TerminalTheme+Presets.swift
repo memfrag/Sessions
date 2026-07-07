@@ -74,6 +74,22 @@ extension TerminalTheme {
             selection: "#434c5e"
         ),
         TerminalTheme(
+            // Palette from the iTerm2-Color-Schemes collection (the same
+            // source Ghostty bundles).
+            id: "vercel",
+            name: "Vercel",
+            ansi: [
+                "#000000", "#fc0036", "#29a948", "#ffae00",
+                "#006aff", "#f32882", "#00ac96", "#feffff",
+                "#a8a8a8", "#ff8080", "#4be15d", "#ffae00",
+                "#49aeff", "#f97ea8", "#00e4c4", "#fefefe"
+            ],
+            foreground: "#fafafa",
+            background: "#101010",
+            cursor: "#f32882",
+            selection: "#005be7"
+        ),
+        TerminalTheme(
             id: "one-dark",
             name: "One Dark",
             ansi: [
