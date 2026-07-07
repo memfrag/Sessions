@@ -96,12 +96,24 @@ final class ServerManager {
         ensureConnecting()
     }
 
-    /// "Quit and Stop All Sessions"
+    /// "Quit and Stop All Sessions": clean slate — every shell terminated,
+    /// the server stopped (a clean exit stays down under launchd too), and
+    /// the app quit.
     func closeAllSessionsAndQuit() {
         Task {
             await client.closeAllSessions()
             try? await Task.sleep(for: .milliseconds(200))
+            await client.requestServerShutdown()
+            try? await Task.sleep(for: .milliseconds(200))
             NSApplication.shared.terminate(nil)
+        }
+    }
+
+    /// Restarts the server: shells die, the layout persists, and the
+    /// connect loop (or launchd) brings a fresh server up immediately.
+    func restartServer() {
+        Task {
+            await client.requestServerRestart()
         }
     }
 

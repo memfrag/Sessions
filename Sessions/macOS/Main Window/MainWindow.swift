@@ -8,21 +8,20 @@ import Sparkle
 
 struct MainWindow: Scene {
 
+    static let windowID = "main"
+
     let updater: SPUUpdater
 
-    @State private var workspacesModel = WorkspacesModel(serverManager: ServerManager())
+    let workspacesModel: WorkspacesModel
 
     var body: some Scene {
 
-        WindowGroup {
+        WindowGroup(id: Self.windowID) {
             Sidebar()
                 .frame(minWidth: 600, minHeight: 400)
                 .background(AlwaysOnTop())
                 .appEnvironment(.default)
                 .environment(workspacesModel)
-                #if os(macOS)
-                .terminatesAppWhenClosed()
-                #endif
         }
         .commands {
             AboutCommand()

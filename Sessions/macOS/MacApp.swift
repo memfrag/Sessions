@@ -20,12 +20,15 @@ struct MacApp: App {
         userDriverDelegate: nil
     )
     
+    @State private var workspacesModel = WorkspacesModel(serverManager: ServerManager())
+
     init() {
         AppDesign.apply()
     }
-    
+
     var body: some Scene {
-        MainWindow(updater: updaterController.updater)
+        MainWindow(updater: updaterController.updater, workspacesModel: workspacesModel)
+        SessionsMenuBar(workspacesModel: workspacesModel)
         SettingsWindow()
         AboutWindow(developedBy: "Apparata AB",
                     attributionsWindowID: AttributionsWindow.windowID)
