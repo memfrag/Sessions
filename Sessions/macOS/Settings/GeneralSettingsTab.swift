@@ -13,11 +13,10 @@ struct GeneralSettingsTab: View {
         Form {
             Section("Terminal") {
                 LabeledContent("Font Size:") {
-                    HStack {
-                        Slider(value: $settings.terminalFontSize, in: 9...24, step: 1) {
-                            EmptyView()
-                        }
-                        .frame(width: 180)
+                    // Deliberately a Stepper, not a Slider: SwiftUI Slider
+                    // triggers a RenderBox default.metallib crash on
+                    // macOS 26.4 (FB/forums thread 799874).
+                    Stepper(value: $settings.terminalFontSize, in: 9...24, step: 1) {
                         Text("\(Int(settings.terminalFontSize)) pt")
                             .monospacedDigit()
                             .frame(width: 44, alignment: .trailing)
