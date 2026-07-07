@@ -43,6 +43,13 @@ final class TerminalSessionController {
     /// A BEL arrived while this tab was in the background.
     private(set) var hasBell = false
 
+    /// While the server replays scrollback, the terminal re-parses old
+    /// query sequences (e.g. Device Attributes) and generates responses.
+    /// Those queries were answered when they originally arrived, so all
+    /// terminal→host traffic is dropped until `replayDone` — otherwise
+    /// the responses land at the shell prompt as garbage input.
+    private var isReplaying = false
+
     init(sessionID: SessionInfo.ID, client: SessionServerClient) {
         self.sessionID = sessionID
         self.client = client
@@ -70,8 +77,15 @@ final class TerminalSessionController {
                 return
             }
             self.attachment = attachment
-            for await chunk in attachment.output {
-                terminalView.feed(byteArray: chunk[...])
+            for await event in attachment.events {
+                switch event {
+                case .replayStarted:
+                    isReplaying = true
+                case .output(let chunk):
+                    terminalView.feed(byteArray: chunk[...])
+                case .replayDone:
+                    isReplaying = false
+                }
             }
         }
     }
@@ -110,6 +124,7 @@ final class TerminalSessionController {
 extension TerminalSessionController: @preconcurrency TerminalViewDelegate {
 
     func send(source: TerminalView, data: ArraySlice<UInt8>) {
+        guard !isReplaying else { return }
         attachment?.sendInput(Array(data))
     }
 

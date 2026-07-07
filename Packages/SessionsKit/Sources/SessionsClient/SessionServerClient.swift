@@ -22,6 +22,19 @@ public enum SessionServerEvent: Sendable {
     case disconnected
 }
 
+/// Ordered events on one session attachment.
+///
+/// A (re)attach delivers `replayStarted`, the scrollback as `output`
+/// chunks, `replayDone`, then live `output`. Consumers must not respond
+/// to terminal queries between `replayStarted` and `replayDone` — the
+/// replayed bytes contain old queries that were already answered when
+/// they originally arrived.
+public enum AttachmentEvent: Sendable {
+    case replayStarted(isAlive: Bool, replayBytes: Int)
+    case output([UInt8])
+    case replayDone
+}
+
 /// The app's connection to the session server.
 ///
 /// Owns the socket, performs the version handshake, routes output frames to
@@ -38,7 +51,7 @@ public actor SessionServerClient {
 
     private var busyContinuations: [UUID: CheckedContinuation<Bool, Never>] = [:]
 
-    private var outputContinuations: [UUID: AsyncStream<[UInt8]>.Continuation] = [:]
+    private var outputContinuations: [UUID: AsyncStream<AttachmentEvent>.Continuation] = [:]
 
     /// Server events. Single consumer (the app's server manager).
     public nonisolated let events: AsyncStream<SessionServerEvent>
@@ -121,7 +134,7 @@ public actor SessionServerClient {
     private func handle(_ frame: Frame) {
         switch frame {
         case .output(let sessionID, let bytes):
-            outputContinuations[sessionID]?.yield(bytes)
+            outputContinuations[sessionID]?.yield(.output(bytes))
         case .input:
             break
         case .control(let message):
@@ -141,10 +154,10 @@ public actor SessionServerClient {
         case .busyStatus(let sessionID, let isBusy):
             busyContinuations[sessionID]?.resume(returning: isBusy)
             busyContinuations[sessionID] = nil
-        case .attached, .replayDone:
-            // Replay boundaries; the terminal controller resets before
-            // attaching, so no action is needed here.
-            break
+        case .attached(let sessionID, let isAlive, let replayBytes):
+            outputContinuations[sessionID]?.yield(.replayStarted(isAlive: isAlive, replayBytes: replayBytes))
+        case .replayDone(let sessionID):
+            outputContinuations[sessionID]?.yield(.replayDone)
         case .error(let code, let message):
             Self.logger.error("Server error \(code.rawValue): \(message)")
             if code == .detachedByOtherClient {
@@ -166,10 +179,10 @@ public actor SessionServerClient {
             throw SessionServerClientError.notConnected
         }
         outputContinuations[sessionID]?.finish()
-        let (stream, continuation) = AsyncStream<[UInt8]>.makeStream()
+        let (stream, continuation) = AsyncStream<AttachmentEvent>.makeStream()
         outputContinuations[sessionID] = continuation
         connection.send(.control(.attach(sessionID: sessionID, cols: cols, rows: rows)))
-        return SessionAttachment(sessionID: sessionID, connection: connection, output: stream)
+        return SessionAttachment(sessionID: sessionID, connection: connection, events: stream)
     }
 
     public func detach(sessionID: UUID) {
@@ -257,9 +270,9 @@ public struct SessionAttachment: Sendable {
 
     let connection: UnixSocketConnection
 
-    /// Scrollback replay followed by live PTY output. Finishes on detach
-    /// or disconnect.
-    public let output: AsyncStream<[UInt8]>
+    /// Ordered attachment events: replay boundaries and output chunks.
+    /// Finishes on detach or disconnect.
+    public let events: AsyncStream<AttachmentEvent>
 
     public func sendInput(_ bytes: [UInt8]) {
         connection.send(.input(sessionID: sessionID, bytes: bytes))

@@ -105,8 +105,10 @@ struct ServerEndToEndTests {
         var collected = [UInt8]()
         var sawMarker = false
         let deadline = ContinuousClock.now + .seconds(10)
-        for await chunk in attachment.output {
-            collected.append(contentsOf: chunk)
+        for await event in attachment.events {
+            if case .output(let chunk) = event {
+                collected.append(contentsOf: chunk)
+            }
             if String(decoding: collected, as: UTF8.self).contains("MARKER-42") {
                 sawMarker = true
                 break
@@ -117,23 +119,29 @@ struct ServerEndToEndTests {
         }
         #expect(sawMarker, "Expected shell echo output to contain MARKER-42")
 
-        // Detach, re-attach: the replay must contain the marker again.
+        // Detach, re-attach: the replay must be bracketed by replayStarted/
+        // replayDone and contain the marker again.
         await client.detach(sessionID: session.id)
         let reattachment = try await client.attach(sessionID: session.id, cols: 80, rows: 24)
         var replayed = [UInt8]()
-        var replaySawMarker = false
+        var sawReplayStarted = false
+        var replaySawMarkerBeforeDone = false
         let replayDeadline = ContinuousClock.now + .seconds(10)
-        for await chunk in reattachment.output {
-            replayed.append(contentsOf: chunk)
-            if String(decoding: replayed, as: UTF8.self).contains("MARKER-42") {
-                replaySawMarker = true
-                break
+        for await event in reattachment.events {
+            switch event {
+            case .replayStarted:
+                sawReplayStarted = true
+            case .output(let chunk):
+                replayed.append(contentsOf: chunk)
+            case .replayDone:
+                replaySawMarkerBeforeDone = String(decoding: replayed, as: UTF8.self).contains("MARKER-42")
             }
-            if ContinuousClock.now > replayDeadline {
+            if replaySawMarkerBeforeDone || ContinuousClock.now > replayDeadline {
                 break
             }
         }
-        #expect(replaySawMarker, "Expected scrollback replay to contain MARKER-42")
+        #expect(sawReplayStarted, "Expected a replayStarted event on re-attach")
+        #expect(replaySawMarkerBeforeDone, "Expected scrollback replay to contain MARKER-42 before replayDone")
     }
 
     @Test func sessionExitIsReportedAndRestartable() async throws {
@@ -188,7 +196,7 @@ struct ServerEndToEndTests {
         // Give the shell a moment to start, then check idle state.
         // Drain output in the background so nothing blocks.
         let drainTask = Task {
-            for await _ in attachment.output {}
+            for await _ in attachment.events {}
         }
         defer { drainTask.cancel() }
         try await Task.sleep(for: .seconds(1))
