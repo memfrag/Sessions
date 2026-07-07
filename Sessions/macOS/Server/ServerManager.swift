@@ -118,6 +118,12 @@ final class ServerManager {
 
     private func connectLoop() async {
         var delay: Duration = .milliseconds(250)
+        // Counts only "a server exists but misbehaves" failures (wedged
+        // handshake, ignored restart requests). Absent-server failures
+        // (connection refused) must NEVER escalate to a kill: killing
+        // nothing helps nothing, and killing a server that is still
+        // starting up creates a self-sustaining churn loop.
+        var wedgedFailures = 0
         let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0.0"
         while !Task.isCancelled {
             do {
@@ -133,15 +139,42 @@ final class ServerManager {
                 // Let the next failed connect bring the new binary up again
                 // (kickstart under launchd, respawn under direct spawn).
                 didLaunchServer = false
+                wedgedFailures += 1
+            } catch SessionServerClientError.handshakeTimeout {
+                Self.logger.error("Handshake timed out; server may be wedged")
+                wedgedFailures += 1
             } catch {
+                // Typically ECONNREFUSED: no server yet. Bring one up once
+                // and give it a moment to bind before the next attempt.
                 if !didLaunchServer {
                     didLaunchServer = true
                     bringUpServer()
+                    try? await Task.sleep(for: .milliseconds(400))
                 }
+            }
+            // A server that repeatedly accepts but never answers (or
+            // ignores restart requests) gets force-killed; the next loop
+            // iteration brings up a fresh one.
+            if wedgedFailures >= 3, strategy != .external {
+                Self.logger.error("Server wedged after \(wedgedFailures) attempts; force-killing")
+                forceKillServer()
+                didLaunchServer = false
+                wedgedFailures = 0
             }
             try? await Task.sleep(for: delay)
             delay = min(delay * 2, .seconds(5))
         }
+    }
+
+    /// Last-resort recovery: SIGKILL any running embedded server so a
+    /// fresh one can be brought up. Live sessions die (same as a server
+    /// crash); layout persists via state.json.
+    private func forceKillServer() {
+        let process = Process()
+        process.executableURL = URL(filePath: "/usr/bin/pkill")
+        process.arguments = ["-9", "-f", "Contents/MacOS/sessions-server"]
+        try? process.run()
+        process.waitUntilExit()
     }
 
     /// Brings the server up according to the launch strategy. Called once
