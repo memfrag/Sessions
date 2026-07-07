@@ -36,6 +36,22 @@ import KeyValueStore
         /// Whether to use SwiftTerm's experimental Metal renderer.
         case useMetalRenderer
 
+        /// Whether the Option key acts as Meta (ESC prefix) instead of
+        /// composing characters.
+        case optionAsMetaKey
+
+        /// Terminal scrollback buffer size in lines.
+        case terminalScrollbackLines
+
+        /// Terminal tab stop width in columns.
+        case terminalTabStopWidth
+
+        /// Terminal cursor shape: "block", "underline", or "bar".
+        case terminalCursorShape
+
+        /// Whether the terminal cursor blinks.
+        case terminalCursorBlinks
+
         // <-- (1 / 3) Add key for new property here
     }
 
@@ -76,6 +92,43 @@ import KeyValueStore
         }
     }
 
+    /// Whether the Option key acts as Meta (ESC prefix). Off by default so
+    /// international layouts can type characters like @ and ~ (e.g. ⌥2 on
+    /// a Swedish keyboard).
+    public var optionAsMetaKey: Bool {
+        didSet {
+            store.save(optionAsMetaKey, for: .optionAsMetaKey)
+        }
+    }
+
+    /// Terminal scrollback buffer size in lines.
+    public var terminalScrollbackLines: Int {
+        didSet {
+            store.save(terminalScrollbackLines, for: .terminalScrollbackLines)
+        }
+    }
+
+    /// Terminal tab stop width in columns.
+    public var terminalTabStopWidth: Int {
+        didSet {
+            store.save(terminalTabStopWidth, for: .terminalTabStopWidth)
+        }
+    }
+
+    /// Terminal cursor shape: "block", "underline", or "bar".
+    public var terminalCursorShape: String {
+        didSet {
+            store.save(terminalCursorShape, for: .terminalCursorShape)
+        }
+    }
+
+    /// Whether the terminal cursor blinks.
+    public var terminalCursorBlinks: Bool {
+        didSet {
+            store.save(terminalCursorBlinks, for: .terminalCursorBlinks)
+        }
+    }
+
     // <-- (2 / 3) Add property for new property here
 
     // MARK: Setup
@@ -96,6 +149,11 @@ import KeyValueStore
         terminalThemeID = self.store.load(.terminalThemeID, default: "system")
         terminalFontName = self.store.load(.terminalFontName, default: "")
         useMetalRenderer = self.store.load(.useMetalRenderer, default: false)
+        optionAsMetaKey = self.store.load(.optionAsMetaKey, default: false)
+        terminalScrollbackLines = self.store.load(.terminalScrollbackLines, default: 10_000)
+        terminalTabStopWidth = self.store.load(.terminalTabStopWidth, default: 8)
+        terminalCursorShape = self.store.load(.terminalCursorShape, default: "block")
+        terminalCursorBlinks = self.store.load(.terminalCursorBlinks, default: true)
 
         // <-- (3 / 3) Add initializer for new property here.
     }

@@ -49,6 +49,39 @@ struct AppearanceSettingsTab: View {
                     }
                 }
             }
+            Section("Terminal") {
+                Picker("Cursor:", selection: $settings.terminalCursorShape) {
+                    Text("Block").tag("block")
+                    Text("Underline").tag("underline")
+                    Text("Bar").tag("bar")
+                }
+                .pickerStyle(.segmented)
+                Toggle("Blinking cursor", isOn: $settings.terminalCursorBlinks)
+                Picker("Scrollback:", selection: $settings.terminalScrollbackLines) {
+                    Text("1 000 lines").tag(1_000)
+                    Text("5 000 lines").tag(5_000)
+                    Text("10 000 lines").tag(10_000)
+                    Text("50 000 lines").tag(50_000)
+                    Text("100 000 lines").tag(100_000)
+                }
+                LabeledContent("Tab Width:") {
+                    Stepper(value: $settings.terminalTabStopWidth, in: 1...16, step: 1) {
+                        Text("\(settings.terminalTabStopWidth) columns")
+                            .monospacedDigit()
+                            .frame(width: 84, alignment: .trailing)
+                    }
+                }
+            }
+            Section("Input") {
+                Toggle("Use Option key as Meta", isOn: $settings.optionAsMetaKey)
+                Text("""
+                Sends ⌥-key combinations as ESC sequences (for Emacs-style \
+                shortcuts). Leave off to type characters like @ and ~ on \
+                international keyboard layouts.
+                """)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
             Section("Rendering") {
                 Toggle("Use Metal renderer (experimental)", isOn: $settings.useMetalRenderer)
                 Text("GPU-accelerated rendering. Turn off if you see drawing glitches.")

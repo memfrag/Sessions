@@ -115,6 +115,54 @@ final class TerminalSessionController {
 
     private var metalApplyFailedForSetting: Bool?
 
+    /// Applies input behavior settings (cheap; assignment-only).
+    func applyInputBehavior(optionAsMetaKey: Bool) {
+        if terminalView.optionAsMetaKey != optionAsMetaKey {
+            terminalView.optionAsMetaKey = optionAsMetaKey
+        }
+    }
+
+    private var appliedCursorStyle: CursorStyle?
+
+    private var appliedScrollbackLines: Int?
+
+    private var appliedTabStopWidth: Int?
+
+    /// Applies terminal-engine options. Cursor style is a live change;
+    /// scrollback and tab stop width require rebuilding the terminal's
+    /// buffers (`Terminal.setup`), which clears the screen — the follow-up
+    /// re-attach replays the content from the server's ring buffer.
+    func applyTerminalOptions(scrollbackLines: Int, tabStopWidth: Int, cursorStyle: CursorStyle) {
+        let terminal = terminalView.getTerminal()
+        if appliedCursorStyle != cursorStyle {
+            appliedCursorStyle = cursorStyle
+            terminal.setCursorStyle(cursorStyle)
+        }
+        let isFirstApplication = appliedScrollbackLines == nil
+        let needsRebuild = !isFirstApplication
+            && (appliedScrollbackLines != scrollbackLines || appliedTabStopWidth != tabStopWidth)
+        appliedScrollbackLines = scrollbackLines
+        appliedTabStopWidth = tabStopWidth
+        guard isFirstApplication || needsRebuild else { return }
+        var options = terminal.options
+        options.scrollback = scrollbackLines
+        options.tabStopWidth = tabStopWidth
+        // Keep the terminal's current size; setup() rebuilds from options.
+        options.cols = terminal.cols
+        options.rows = terminal.rows
+        options.cursorStyle = cursorStyle
+        terminal.options = options
+        if needsRebuild {
+            terminal.setup(isReset: false)
+            attach()
+        } else {
+            // First application happens right after view creation, before
+            // any content: rebuild silently, no replay needed beyond the
+            // attach that follows anyway.
+            terminal.setup(isReset: false)
+        }
+    }
+
     /// Applies theme, font, and margin background. Called from every
     /// `updateNSView` pass — including for hidden tabs in the ZStack — so
     /// everything is guarded to be cheap when nothing changed.

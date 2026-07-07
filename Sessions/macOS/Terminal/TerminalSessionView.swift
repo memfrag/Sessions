@@ -53,5 +53,22 @@ struct TerminalSessionView: NSViewRepresentable {
             container: container
         )
         controller.applyRendererIfNeeded(useMetal: settings.useMetalRenderer)
+        controller.applyInputBehavior(optionAsMetaKey: settings.optionAsMetaKey)
+        controller.applyTerminalOptions(
+            scrollbackLines: settings.terminalScrollbackLines,
+            tabStopWidth: settings.terminalTabStopWidth,
+            cursorStyle: Self.cursorStyle(
+                shape: settings.terminalCursorShape,
+                blinks: settings.terminalCursorBlinks
+            )
+        )
+    }
+
+    private static func cursorStyle(shape: String, blinks: Bool) -> CursorStyle {
+        switch shape {
+        case "underline": blinks ? .blinkUnderline : .steadyUnderline
+        case "bar": blinks ? .blinkBar : .steadyBar
+        default: blinks ? .blinkBlock : .steadyBlock
+        }
     }
 }
