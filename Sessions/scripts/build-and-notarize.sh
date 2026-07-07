@@ -15,11 +15,11 @@ set -euo pipefail
 # -----------------------------------------------------------------------------
 
 # --- Constants ---
-SCHEME="Sessions"
+SCHEME="Sessions (Release)"
 APP_NAME="Sessions"
 KEYCHAIN_PROFILE="notary"
 SPARKLE_VERSION="2.9.1"
-GITHUB_REPO="memfrag/Xpro"
+GITHUB_REPO="memfrag/Sessions"
 
 # --- Paths ---
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"

@@ -5,7 +5,7 @@
     <key>SUEnableInstallerLauncherService</key>
     <true/>
     <key>SUFeedURL</key>
-    <string>https://raw.githubusercontent.com/memfrag/Xpro/main/appcast.xml</string>
+    <string>https://raw.githubusercontent.com/memfrag/Sessions/main/appcast.xml</string>
     <key>SUPublicEDKey</key>
     <string>AvJMcXvL9lwbU8D00Z9uECjR9zdeOlcsl7Rktg/hQVE=</string>
 </dict>
