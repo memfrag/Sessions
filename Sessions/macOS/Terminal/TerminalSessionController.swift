@@ -380,6 +380,9 @@ extension TerminalSessionController: @preconcurrency TerminalViewDelegate {
     }
 
     func bell(source: TerminalView) {
+        // Historical BELs still in the scrollback re-fire during replay
+        // (badging a tab on every app start); only live bells count.
+        guard !isReplaying else { return }
         hasBell = true
     }
 
