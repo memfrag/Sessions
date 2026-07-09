@@ -54,6 +54,15 @@ do {
     if let teamID {
         logger.info("Pinning peer team identifier \(teamID)")
     }
+    #if !DEBUG
+    // A distributed build must be Developer ID-signed; without a team the
+    // policy silently degrades to identifier matching, which any same-user
+    // process can forge with an ad-hoc signature. Fail loudly (but keep
+    // running: plain ad-hoc Release builds are still a supported dev case).
+    if teamID == nil {
+        logger.fault("Release server has no signing team; peer policy is identifier-only")
+    }
+    #endif
     var peerPolicy = PeerPolicy.signedClients(
         identifiers: ["io.apparata.Sessions", "sessions-server"],
         identifierPrefixes: ["sessions-server-"],
