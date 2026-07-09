@@ -1,0 +1,15 @@
+<?xml version="1.0" standalone="yes"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+    <channel>
+        <title>Sessions</title>
+        <item>
+            <title>1.2.0</title>
+            <pubDate>Fri, 10 Jul 2026 01:36:39 +0200</pubDate>
+            <sparkle:version>1.2.0</sparkle:version>
+            <sparkle:shortVersionString>1.2.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <enclosure url="https://github.com/memfrag/Sessions/releases/download/1.2.0/Sessions-1.2.0.dmg" length="4313712" type="application/octet-stream" sparkle:edSignature="cWo5fWh6UREToxeZ/ZT48U033CiMLclXnMffjSCVuWNRdUSBQSHEdM+Vxw/PAXA4+QnxTgg+pYhNosvHQ19CBw=="/>
+        </item>
+    </channel>
+</rss>
