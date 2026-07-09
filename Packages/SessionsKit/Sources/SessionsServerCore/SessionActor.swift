@@ -86,7 +86,9 @@ actor SessionActor {
         isAlive = true
         exitCode = nil
         clientReportedCwd = nil
-        ring.clear()
+        // The ring is deliberately NOT cleared: a restarted shell's banner
+        // appends after the previous content, and attach replays the whole
+        // ring after a full reset — old context, then the fresh prompt.
         startReading(pty: pty)
         startExitWatcher(pty: pty)
         Self.logger.info("Spawned shell pid \(pty.pid) for session \(self.id)")
@@ -333,6 +335,18 @@ actor SessionActor {
 
     func isBusy() -> Bool {
         pty?.isBusy() ?? false
+    }
+
+    /// Current scrollback contents, oldest first (for shutdown persistence).
+    func scrollbackSnapshot() -> [UInt8] {
+        ring.snapshot()
+    }
+
+    /// Seeds the ring with scrollback restored from disk. Only meaningful
+    /// for a freshly materialized dead session with an empty ring.
+    func preloadScrollback(_ bytes: [UInt8]) {
+        guard !isAlive, ring.count == 0 else { return }
+        ring.append(bytes)
     }
 
     func noteClientReportedCwd(_ path: String) {

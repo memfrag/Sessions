@@ -17,6 +17,8 @@ public actor ServerCore {
 
     private let store: StateStore
 
+    private let scrollbackStore: ScrollbackStore
+
     private let serverVersion: String
 
     private var state: ServerState
@@ -33,6 +35,7 @@ public actor ServerCore {
     ) throws {
         listener = try UnixSocketListener(path: socketPath, peerPolicy: peerPolicy)
         store = StateStore(path: statePath)
+        scrollbackStore = ScrollbackStore(statePath: statePath)
         self.serverVersion = serverVersion
         let loadedState = store.load()
         state = loadedState
@@ -41,20 +44,40 @@ public actor ServerCore {
 
     /// Accepts connections until the listener closes.
     public func run() async {
-        // Materialize session actors for every persisted session (dead).
+        // Materialize session actors for every persisted session (dead)
+        // and restore any scrollback saved at the last graceful exit, so
+        // re-attaching a dormant session replays its old content.
+        var persistedIDs = Set<UUID>()
         for workspace in state.workspaces {
             for session in workspace.sessions {
-                materializeSession(id: session.id)
+                persistedIDs.insert(session.id)
+                let actor = materializeSession(id: session.id)
+                if let bytes = scrollbackStore.load(sessionID: session.id) {
+                    await actor.preloadScrollback(bytes)
+                }
             }
         }
+        scrollbackStore.deleteAll(notIn: persistedIDs)
         for await connection in listener.connections {
             addClient(connection)
         }
     }
 
-    /// Persists state and exits the process.
-    public func persistAndExit(code: Int32) {
+    /// Persists the layout and every session's scrollback. Split from
+    /// `persistAndExit` so tests can exercise the shutdown persistence
+    /// without exiting the test runner.
+    func persistForShutdown() async {
         store.save(state)
+        // Snapshot before the shells are killed; post-SIGHUP output is
+        // not worth racing for.
+        for (id, session) in sessions {
+            scrollbackStore.save(sessionID: id, bytes: await session.scrollbackSnapshot())
+        }
+    }
+
+    /// Persists state and scrollback, then exits the process.
+    public func persistAndExit(code: Int32) async {
+        await persistForShutdown()
         for session in sessions.values {
             // Best effort: SIGHUP so shells die cleanly with the server.
             Task {
@@ -127,9 +150,9 @@ public actor ServerCore {
                 connection.send(.control(.protocolMismatch(serverProtocolVersion: SessionsProtocolInfo.version)))
             }
         case .restartServer:
-            persistAndExit(code: 1)
+            await persistAndExit(code: 1)
         case .shutdown:
-            persistAndExit(code: 0)
+            await persistAndExit(code: 0)
         case .createWorkspace(let name, let rootPath, let startupCommand, let colorID):
             let workspace = Workspace(
                 name: name,
@@ -159,6 +182,7 @@ public actor ServerCore {
             guard let index = state.workspaces.firstIndex(where: { $0.id == id }) else { return }
             for session in state.workspaces[index].sessions {
                 await removeSessionActor(id: session.id)
+                scrollbackStore.delete(sessionID: session.id)
             }
             state.workspaces.remove(at: index)
             persistAndBroadcast()
@@ -176,10 +200,12 @@ public actor ServerCore {
         case .closeSession(let id):
             await removeSessionActor(id: id)
             removeSessionFromState(id: id)
+            scrollbackStore.delete(sessionID: id)
             persistAndBroadcast()
         case .closeAllSessions:
             for id in sessions.keys {
                 await removeSessionActor(id: id)
+                scrollbackStore.delete(sessionID: id)
             }
             for index in state.workspaces.indices {
                 state.workspaces[index].sessions.removeAll()
