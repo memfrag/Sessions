@@ -456,6 +456,57 @@ struct ServerEndToEndTests {
         #expect(startupRuns <= 1, "Restart must not re-run the startup command; saw \(startupRuns) run(s)")
     }
 
+    /// Moving a session to another workspace is a pure state move: the
+    /// shell keeps running and I/O still flows afterwards.
+    @Test func moveSessionBetweenWorkspacesKeepsShellAlive() async throws {
+        let paths = makeTempPaths()
+        defer { try? FileManager.default.removeItem(atPath: paths.directory) }
+        let (_, serverTask) = try startServer(socket: paths.socket, state: paths.state)
+        defer { serverTask.cancel() }
+        let (client, _) = try await connectClient(socket: paths.socket)
+
+        await client.createWorkspace(name: "Source", rootPath: "/tmp")
+        _ = await waitForState(client) { $0.workspaces.count == 1 }
+        await client.createWorkspace(name: "Target", rootPath: "/tmp")
+        let state1 = await waitForState(client) { $0.workspaces.count == 2 }
+        let source = try #require(state1?.workspaces.first { $0.name == "Source" })
+        let target = try #require(state1?.workspaces.first { $0.name == "Target" })
+        let session = try #require(source.sessions.first)
+
+        let attachment = try await client.attach(sessionID: session.id, cols: 80, rows: 24)
+        await client.moveSessionToWorkspace(id: session.id, workspaceID: target.id, toIndex: nil)
+        let state2 = await waitForState(client) { state in
+            state.workspace(withID: target.id)?.sessions.contains { $0.id == session.id } ?? false
+        }
+        let movedTarget = try #require(state2?.workspace(withID: target.id))
+        #expect(movedTarget.sessions.last?.id == session.id)
+        #expect(state2?.workspace(withID: source.id)?.sessions.isEmpty == true)
+        #expect(movedTarget.sessions.first { $0.id == session.id }?.isAlive == true)
+
+        // I/O still flows through the untouched attachment after the move.
+        attachment.sendInput(Array("echo MOVED-$((500 + 1))\n".utf8))
+        var collected = [UInt8]()
+        var sawMarker = false
+        let deadline = ContinuousClock.now + .seconds(10)
+        for await event in attachment.events {
+            if case .output(let chunk) = event {
+                collected.append(contentsOf: chunk)
+            }
+            if String(decoding: collected, as: UTF8.self).contains("MOVED-501") {
+                sawMarker = true
+                break
+            }
+            if ContinuousClock.now > deadline {
+                break
+            }
+        }
+        #expect(sawMarker, "Expected I/O to keep flowing after the move")
+
+        // The move persists.
+        let persisted = StateStore(path: paths.state).load()
+        #expect(persisted.workspace(withID: target.id)?.sessions.contains { $0.id == session.id } == true)
+    }
+
     /// updateWorkspace edits name, startup command, and color, and the
     /// changes survive a StateStore round trip.
     @Test func updateWorkspaceRoundTrip() async throws {

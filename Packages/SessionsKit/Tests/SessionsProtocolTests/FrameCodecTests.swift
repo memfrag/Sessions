@@ -171,7 +171,9 @@ struct FrameCodecTests {
     @Test func newWorkspaceMessagesRoundTrip() throws {
         let messages: [ControlMessage] = [
             .createWorkspace(name: "W", rootPath: "/tmp", startupCommand: "claude", colorID: "teal"),
-            .updateWorkspace(id: UUID(), name: "W2", startupCommand: nil, colorID: "red")
+            .updateWorkspace(id: UUID(), name: "W2", startupCommand: nil, colorID: "red"),
+            .moveSessionToWorkspace(id: UUID(), workspaceID: UUID(), toIndex: 2),
+            .moveSessionToWorkspace(id: UUID(), workspaceID: UUID(), toIndex: nil)
         ]
         for message in messages {
             let encoded = try FrameEncoder.encode(.control(message))

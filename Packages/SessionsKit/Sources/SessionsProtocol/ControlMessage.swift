@@ -45,6 +45,10 @@ public enum ControlMessage: Codable, Sendable, Equatable {
     /// Respawns the shell of a dead session.
     case restartSession(id: UUID)
     case moveSession(id: UUID, toIndex: Int)
+    /// Moves a session to another workspace (drag a tab onto a sidebar
+    /// row). A pure state move: the PTY, scrollback, and any attachment
+    /// are untouched. `toIndex` nil appends at the end.
+    case moveSessionToWorkspace(id: UUID, workspaceID: UUID, toIndex: Int?)
 
     // MARK: Busy check (close confirmation)
 

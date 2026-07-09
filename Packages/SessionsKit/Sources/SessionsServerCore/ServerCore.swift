@@ -200,6 +200,22 @@ public actor ServerCore {
             sessionList.insert(session, at: min(max(0, toIndex), sessionList.count))
             state.workspaces[workspaceIndex].sessions = sessionList
             persistAndBroadcast()
+        case .moveSessionToWorkspace(let id, let workspaceID, let toIndex):
+            guard let targetIndex = state.workspaces.firstIndex(where: { $0.id == workspaceID }) else {
+                connection.send(.control(.error(code: .unknownWorkspace, message: "No workspace \(workspaceID)")))
+                return
+            }
+            guard let sourceIndex = state.workspaces.firstIndex(where: { workspace in
+                workspace.sessions.contains { $0.id == id }
+            }), let sessionIndex = state.workspaces[sourceIndex].sessions.firstIndex(where: { $0.id == id })
+            else { return }
+            // Pure state move: the SessionActor is keyed by session ID and
+            // never touched — PTY, scrollback, and attachment all survive.
+            let session = state.workspaces[sourceIndex].sessions.remove(at: sessionIndex)
+            let count = state.workspaces[targetIndex].sessions.count
+            let insertAt = min(max(0, toIndex ?? count), count)
+            state.workspaces[targetIndex].sessions.insert(session, at: insertAt)
+            persistAndBroadcast()
         case .sessionCwdChanged(let sessionID, let path):
             await sessions[sessionID]?.noteClientReportedCwd(path)
         case .checkBusy(let sessionID):

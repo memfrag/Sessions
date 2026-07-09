@@ -207,6 +207,18 @@ final class WorkspacesModel {
         }
     }
 
+    /// Moves a session to another workspace (tab dragged onto a sidebar
+    /// row). The moved tab becomes the target workspace's selection; the
+    /// source selection self-heals via the membership check in
+    /// `selectedSessionID(in:)`.
+    func moveSessionToWorkspace(id: SessionInfo.ID, toWorkspace workspaceID: Workspace.ID) {
+        guard findSession(id: id)?.workspace.id != workspaceID else { return }
+        selectedSessionIDByWorkspace[workspaceID] = id
+        Task {
+            await serverManager.client.moveSessionToWorkspace(id: id, workspaceID: workspaceID)
+        }
+    }
+
     func selectSession(id: SessionInfo.ID, in workspaceID: Workspace.ID) {
         selectedSessionIDByWorkspace[workspaceID] = id
         sessionRegistry.controllerIfExists(for: id)?.clearAttention()

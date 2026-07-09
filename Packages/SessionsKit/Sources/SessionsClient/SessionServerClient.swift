@@ -312,6 +312,10 @@ public actor SessionServerClient {
         send(.moveSession(id: id, toIndex: toIndex))
     }
 
+    public func moveSessionToWorkspace(id: UUID, workspaceID: UUID, toIndex: Int? = nil) {
+        send(.moveSessionToWorkspace(id: id, workspaceID: workspaceID, toIndex: toIndex))
+    }
+
     /// Reports a session's OSC 7 working directory to the server, which
     /// prefers it for new-tab cwd inheritance.
     public func reportCwd(sessionID: UUID, path: String) {

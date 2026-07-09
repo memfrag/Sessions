@@ -22,6 +22,8 @@ struct WorkspaceSidebarItem: View {
     /// the edit sheet state.
     let onEdit: (Workspace) -> Void
 
+    @State private var isDropTargeted = false
+
     var body: some View {
         NavigationLink(value: workspace.id) {
             VStack(alignment: .leading, spacing: 1) {
@@ -54,6 +56,21 @@ struct WorkspaceSidebarItem: View {
                 model.isRootMissing(for: workspace)
                     ? Text(Image(systemName: "exclamationmark.triangle.fill"))
                     : nil
+            )
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+            // Tabs are draggable as session-ID strings; dropping one here
+            // moves the session into this workspace.
+            .dropDestination(for: String.self) { items, _ in
+                guard let sessionID = items.first.flatMap(UUID.init) else { return false }
+                model.moveSessionToWorkspace(id: sessionID, toWorkspace: workspace.id)
+                return true
+            } isTargeted: { targeting in
+                isDropTargeted = targeting
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.accentColor.opacity(isDropTargeted ? 0.2 : 0))
             )
         }
         .contextMenu {
