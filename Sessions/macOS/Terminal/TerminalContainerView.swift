@@ -16,8 +16,11 @@ import AppKit
 /// `textBackgroundColor`) re-resolve when the effective appearance changes.
 final class TerminalContainerView: NSView {
 
-    /// Inner margin between the container edge and the terminal content.
-    static let inset: CGFloat = 4
+    /// Inner margins between the container edges and the terminal content.
+    static let leadingInset: CGFloat = 8
+    static let trailingInset: CGFloat = 2
+    static let topInset: CGFloat = 6
+    static let bottomInset: CGFloat = 6
 
     /// The terminal view to keep inset within the container.
     weak var hostedView: NSView? {
@@ -56,12 +59,19 @@ final class TerminalContainerView: NSView {
 
     private func layoutHostedView() {
         guard let hostedView else { return }
-        let inset = Self.inset
-        if bounds.width > inset * 2, bounds.height > inset * 2 {
-            hostedView.frame = bounds.insetBy(dx: inset, dy: inset)
-        } else {
+        let horizontal = Self.leadingInset + Self.trailingInset
+        let vertical = Self.topInset + Self.bottomInset
+        guard bounds.width > horizontal, bounds.height > vertical else {
             hostedView.frame = bounds
+            return
         }
+        // Non-flipped view: y origin is the bottom edge.
+        hostedView.frame = NSRect(
+            x: Self.leadingInset,
+            y: Self.bottomInset,
+            width: bounds.width - horizontal,
+            height: bounds.height - vertical
+        )
     }
 
     override func updateLayer() {
