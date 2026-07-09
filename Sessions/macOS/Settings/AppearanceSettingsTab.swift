@@ -62,6 +62,13 @@ struct AppearanceSettingsTab: View {
                 """)
                 .font(.caption)
                 .foregroundStyle(.secondary)
+                Toggle("Confirm before pasting multiple lines", isOn: $settings.confirmMultilinePaste)
+                Text("""
+                Pasted text that contains newlines may be executed by the \
+                shell immediately; asking first prevents accidents.
+                """)
+                .font(.caption)
+                .foregroundStyle(.secondary)
             }
             Section("Rendering") {
                 Toggle("Use Metal renderer (experimental)", isOn: $settings.useMetalRenderer)

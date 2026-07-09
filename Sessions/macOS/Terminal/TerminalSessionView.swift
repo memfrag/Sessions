@@ -64,7 +64,10 @@ struct TerminalSessionView: NSViewRepresentable {
             container: container
         )
         controller.applyRendererIfNeeded(useMetal: settings.useMetalRenderer)
-        controller.applyInputBehavior(optionAsMetaKey: settings.optionAsMetaKey)
+        controller.applyInputBehavior(
+            optionAsMetaKey: settings.optionAsMetaKey,
+            confirmMultilinePaste: settings.confirmMultilinePaste
+        )
         controller.applyTerminalOptions(
             scrollbackLines: settings.terminalScrollbackLines,
             tabStopWidth: settings.terminalTabStopWidth,

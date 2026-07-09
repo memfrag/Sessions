@@ -62,6 +62,9 @@ import KeyValueStore
         /// Whether attention notifications play a sound.
         case attentionNotificationSoundEnabled
 
+        /// Whether pasting text with newlines asks for confirmation.
+        case confirmMultilinePaste
+
         // <-- (1 / 3) Add key for new property here
     }
 
@@ -161,6 +164,14 @@ import KeyValueStore
         }
     }
 
+    /// Whether pasting text with newlines asks for confirmation first
+    /// (the shell may execute each line immediately).
+    public var confirmMultilinePaste: Bool {
+        didSet {
+            store.save(confirmMultilinePaste, for: .confirmMultilinePaste)
+        }
+    }
+
     // <-- (2 / 3) Add property for new property here
 
     // MARK: Setup
@@ -189,6 +200,8 @@ import KeyValueStore
         terminalThemeOverrides = self.store.load(.terminalThemeOverrides, default: [:])
         attentionNotificationsEnabled = self.store.load(.attentionNotificationsEnabled, default: false)
         attentionNotificationSoundEnabled = self.store.load(.attentionNotificationSoundEnabled, default: true)
+
+        confirmMultilinePaste = self.store.load(.confirmMultilinePaste, default: true)
 
         // <-- (3 / 3) Add initializer for new property here.
     }

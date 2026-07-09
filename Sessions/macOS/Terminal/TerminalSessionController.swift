@@ -24,7 +24,7 @@ final class TerminalSessionController {
 
     let sessionID: SessionInfo.ID
 
-    let terminalView: TerminalView
+    let terminalView: SessionsTerminalView
 
     private let client: SessionServerClient
 
@@ -125,7 +125,8 @@ final class TerminalSessionController {
     private var metalApplyFailedForSetting: Bool?
 
     /// Applies input behavior settings (cheap; assignment-only).
-    func applyInputBehavior(optionAsMetaKey: Bool) {
+    func applyInputBehavior(optionAsMetaKey: Bool, confirmMultilinePaste: Bool) {
+        terminalView.confirmsMultilinePaste = confirmMultilinePaste
         if terminalView.optionAsMetaKey != optionAsMetaKey {
             terminalView.optionAsMetaKey = optionAsMetaKey
         }
@@ -228,7 +229,7 @@ final class TerminalSessionController {
     init(sessionID: SessionInfo.ID, client: SessionServerClient) {
         self.sessionID = sessionID
         self.client = client
-        terminalView = TerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
+        terminalView = SessionsTerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
         terminalView.terminalDelegate = self
         // OSC 9 (iTerm2/kitty notification convention): used by tools like
         // Claude Code hooks to signal "needs attention". The handler fires
