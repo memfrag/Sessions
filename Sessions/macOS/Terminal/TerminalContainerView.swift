@@ -17,7 +17,7 @@ import AppKit
 final class TerminalContainerView: NSView {
 
     /// Inner margin between the container edge and the terminal content.
-    static let inset: CGFloat = 2
+    static let inset: CGFloat = 4
 
     /// The terminal view to keep inset within the container.
     weak var hostedView: NSView? {
