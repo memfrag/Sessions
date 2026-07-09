@@ -192,6 +192,21 @@ final class WorkspacesModel {
         sessionRegistry.controllerIfExists(for: id)?.clearAttention()
     }
 
+    /// The folder name of the selected tab's working directory (from
+    /// OSC 7), for display in the sidebar. Returns "~" for the home
+    /// directory and nil when the cwd is unknown (no shell integration).
+    func currentDirectoryName(for workspace: Workspace) -> String? {
+        guard let sessionID = selectedSessionID(in: workspace),
+              let directory = sessionRegistry.controllerIfExists(for: sessionID)?.currentDirectory else {
+            return nil
+        }
+        if directory == NSHomeDirectory() {
+            return "~"
+        }
+        let name = (directory as NSString).lastPathComponent
+        return name.isEmpty ? directory : name
+    }
+
     /// Whether any session in the workspace wants the user's attention
     /// (bell or OSC 9 notification, e.g. Claude Code awaiting input).
     func workspaceNeedsAttention(_ workspace: Workspace) -> Bool {

@@ -21,13 +21,23 @@ struct Sidebar: View {
                 Section(header: Text("Workspaces")) {
                     ForEach(model.workspaces) { workspace in
                         NavigationLink(value: workspace.id) {
-                            HStack(spacing: 6) {
-                                Label(workspace.name, systemImage: "terminal")
-                                if model.workspaceNeedsAttention(workspace) {
-                                    Image(systemName: "bell.fill")
+                            VStack(alignment: .leading, spacing: 1) {
+                                HStack(spacing: 6) {
+                                    Label(workspace.name, systemImage: "terminal")
+                                    if model.workspaceNeedsAttention(workspace) {
+                                        Image(systemName: "bell.fill")
+                                            .font(.caption2)
+                                            .foregroundStyle(.orange)
+                                            .help("A session needs attention")
+                                    }
+                                }
+                                if let directory = model.currentDirectoryName(for: workspace) {
+                                    Text(directory)
                                         .font(.caption2)
-                                        .foregroundStyle(.orange)
-                                        .help("A session needs attention")
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
+                                        .truncationMode(.middle)
+                                        .padding(.leading, 24)
                                 }
                             }
                             .badge(
