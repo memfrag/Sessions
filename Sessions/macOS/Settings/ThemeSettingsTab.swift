@@ -196,7 +196,9 @@ struct ThemeSettingsTab: View {
     }
 }
 
+#if DEBUG
 #Preview {
     ThemeSettingsTab()
         .previewEnvironment()
 }
+#endif

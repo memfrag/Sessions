@@ -95,7 +95,9 @@ struct AppearanceSettingsTab: View {
     }
 }
 
+#if DEBUG
 #Preview {
     AppearanceSettingsTab()
         .previewEnvironment()
 }
+#endif
