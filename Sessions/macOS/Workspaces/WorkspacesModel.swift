@@ -270,6 +270,14 @@ final class WorkspacesModel {
         workspaces.contains { workspaceNeedsAttention($0) }
     }
 
+    /// Highest-priority Claude status across the workspace's tabs
+    /// (needs-input > working > done > none).
+    func workspaceClaudeStatus(_ workspace: Workspace) -> TerminalSessionController.ClaudeStatus {
+        workspace.sessions.reduce(.none) { status, session in
+            max(status, sessionRegistry.controllerIfExists(for: session.id)?.claudeStatus ?? .none)
+        }
+    }
+
     /// Controller of the currently selected tab, if it exists.
     var selectedTerminalController: TerminalSessionController? {
         guard let workspace = selectedWorkspace,

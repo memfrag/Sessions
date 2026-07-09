@@ -111,6 +111,22 @@ private struct TerminalTabItem: View {
                     .font(.caption2)
                     .foregroundStyle(.orange)
                     .help("Process exited")
+            } else if controller.claudeStatus == .needsInput && !isSelected {
+                Image(systemName: "bell.fill")
+                    .font(.caption2)
+                    .foregroundStyle(.orange)
+                    .help("Claude needs input")
+            } else if controller.claudeStatus == .working {
+                // Status, not attention: shown on the selected tab too.
+                Image(systemName: "hourglass")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .help("Claude is working")
+            } else if controller.claudeStatus == .done {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.caption2)
+                    .foregroundStyle(.green)
+                    .help("Claude is done")
             } else if controller.needsAttention && !isSelected {
                 Image(systemName: "bell.fill")
                     .font(.caption2)

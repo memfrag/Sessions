@@ -54,9 +54,28 @@ final class TerminalSessionController {
     /// that it needs input).
     private(set) var hasNotification = false
 
-    /// Whether this tab wants the user's attention (bell or notification).
+    /// Claude Code lifecycle state, driven by `claude:`-prefixed OSC 9
+    /// payloads from the bundled hooks. Ordered by badge priority, so a
+    /// workspace aggregates its tabs' statuses with `max`.
+    enum ClaudeStatus: Int, Comparable {
+        case none
+        case done
+        case working
+        case needsInput
+
+        static func < (lhs: Self, rhs: Self) -> Bool {
+            lhs.rawValue < rhs.rawValue
+        }
+    }
+
+    /// Current Claude state in this tab; cleared when the user types.
+    private(set) var claudeStatus: ClaudeStatus = .none
+
+    /// Whether this tab wants the user's attention. Claude "working" and
+    /// "done" are calm status, not attention — only needs-input (and
+    /// legacy signals) light the bell.
     var needsAttention: Bool {
-        hasBell || hasNotification
+        hasBell || hasNotification || claudeStatus == .needsInput
     }
 
     /// While the server replays scrollback, the terminal re-parses old
@@ -245,11 +264,36 @@ final class TerminalSessionController {
         // Historical OSC 9 sequences re-fire during scrollback replay;
         // they were handled when they originally arrived.
         guard !isReplaying else { return }
+        if let message, message.hasPrefix("claude:") {
+            noteClaudeStatus(payload: message)
+            return
+        }
+        // Legacy path: any plain OSC 9 payload is a generic notification.
         hasNotification = true
+        postAttentionNotification(body: (message?.isEmpty ?? true) ? "A session needs attention" : message ?? "")
+    }
+
+    /// `claude:working` / `claude:input` / `claude:done` from the bundled
+    /// hooks. Each payload overwrites the previous state, following
+    /// Claude's real lifecycle. Unknown `claude:*` payloads (from newer
+    /// hook versions) are treated as needs-input, the safe default.
+    private func noteClaudeStatus(payload: String) {
+        switch payload {
+        case "claude:working":
+            claudeStatus = .working
+        case "claude:done":
+            claudeStatus = .done
+            postAttentionNotification(body: "Claude is done")
+        default:
+            claudeStatus = .needsInput
+            postAttentionNotification(body: "Claude needs input")
+        }
+    }
+
+    private func postAttentionNotification(body: String) {
         let title = shellTitle
             ?? currentDirectory.map { ($0 as NSString).lastPathComponent }
             ?? "Terminal"
-        let body = (message?.isEmpty ?? true) ? "A session needs attention" : message ?? ""
         AttentionNotifier.post(title: title, body: body)
     }
 
@@ -310,6 +354,7 @@ final class TerminalSessionController {
     func clearAttention() {
         hasBell = false
         hasNotification = false
+        claudeStatus = .none
     }
 
     /// Never started since the server booted (fresh boot or reboot), as
@@ -323,8 +368,9 @@ extension TerminalSessionController: @preconcurrency TerminalViewDelegate {
 
     func send(source: TerminalView, data: ArraySlice<UInt8>) {
         guard !isReplaying else { return }
-        // The user is interacting with this tab; attention is served.
-        if needsAttention {
+        // The user is interacting with this tab; attention is served and
+        // any Claude status badge (incl. working/done) is stale.
+        if needsAttention || claudeStatus != .none {
             clearAttention()
         }
         attachment?.sendInput(Array(data))

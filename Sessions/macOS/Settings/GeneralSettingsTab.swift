@@ -7,20 +7,25 @@ import SwiftUI
 
 struct GeneralSettingsTab: View {
 
-    /// Claude Code hook that signals "needs attention" via OSC 9. Hooks run
-    /// detached from the controlling terminal, so this writes to the
-    /// terminal device by the path captured in SESSIONS_TTY (set by the
-    /// shell integration), falling back to /dev/tty.
+    /// Claude Code hooks that report the Claude lifecycle via OSC 9
+    /// (`claude:working` / `claude:input` / `claude:done` → tab badges).
+    /// Hooks run detached from the controlling terminal, so this writes
+    /// to the terminal device by the path captured in SESSIONS_TTY (set
+    /// by the shell integration), falling back to /dev/tty.
     static let claudeCodeHookSnippet = """
     {
       "hooks": {
+        "UserPromptSubmit": [
+          { "hooks": [ { "type": "command",
+            "command": "printf '\\\\033]9;claude:working\\\\007' > \\"${SESSIONS_TTY:-/dev/tty}\\"" } ] }
+        ],
         "Notification": [
           { "hooks": [ { "type": "command",
-            "command": "printf '\\\\033]9;Claude needs input\\\\007' > \\"${SESSIONS_TTY:-/dev/tty}\\"" } ] }
+            "command": "printf '\\\\033]9;claude:input\\\\007' > \\"${SESSIONS_TTY:-/dev/tty}\\"" } ] }
         ],
         "Stop": [
           { "hooks": [ { "type": "command",
-            "command": "printf '\\\\033]9;Claude is done\\\\007' > \\"${SESSIONS_TTY:-/dev/tty}\\"" } ] }
+            "command": "printf '\\\\033]9;claude:done\\\\007' > \\"${SESSIONS_TTY:-/dev/tty}\\"" } ] }
         ]
       }
     }
@@ -84,10 +89,11 @@ struct GeneralSettingsTab: View {
             }
             Section("Claude Code Integration") {
                 Text("""
-                When Claude Code needs your input, Sessions highlights the \
-                tab and workspace with a bell badge. In zsh this works \
+                Sessions shows each tab's Claude state: an hourglass while \
+                Claude is working, an orange bell when it needs your input, \
+                and a green checkmark when it is done. In zsh this works \
                 automatically — the `claude` command is wrapped to load the \
-                attention hooks. For other shells, merge this hook into \
+                hooks. For other shells, merge these hooks into \
                 ~/.claude/settings.json:
                 """)
                 .font(.caption)

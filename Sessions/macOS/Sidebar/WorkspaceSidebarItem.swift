@@ -40,6 +40,16 @@ struct WorkspaceSidebarItem: View {
                             .font(.caption2)
                             .foregroundStyle(.orange)
                             .help("A session needs attention")
+                    } else if model.workspaceClaudeStatus(workspace) == .working {
+                        Image(systemName: "hourglass")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .help("Claude is working")
+                    } else if model.workspaceClaudeStatus(workspace) == .done {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.caption2)
+                            .foregroundStyle(.green)
+                            .help("Claude is done")
                     }
                 }
                 if let directory = model.currentDirectoryName(for: workspace) {

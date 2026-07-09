@@ -1,11 +1,21 @@
 {
   "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf '\\033]9;claude:working\\007' > \"${SESSIONS_TTY:-/dev/tty}\""
+          }
+        ]
+      }
+    ],
     "Notification": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "printf '\\033]9;Claude needs input\\007' > \"${SESSIONS_TTY:-/dev/tty}\""
+            "command": "printf '\\033]9;claude:input\\007' > \"${SESSIONS_TTY:-/dev/tty}\""
           }
         ]
       }
@@ -15,7 +25,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "printf '\\033]9;Claude is done\\007' > \"${SESSIONS_TTY:-/dev/tty}\""
+            "command": "printf '\\033]9;claude:done\\007' > \"${SESSIONS_TTY:-/dev/tty}\""
           }
         ]
       }

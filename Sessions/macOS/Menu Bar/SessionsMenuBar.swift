@@ -145,6 +145,14 @@ private struct SessionsMenuBarView: View {
                         Image(systemName: "bell.fill")
                             .font(.caption2)
                             .foregroundStyle(.orange)
+                    } else if model.workspaceClaudeStatus(workspace) == .working {
+                        Image(systemName: "hourglass")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    } else if model.workspaceClaudeStatus(workspace) == .done {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.caption2)
+                            .foregroundStyle(.green)
                     }
                     Spacer()
                     let live = workspace.sessions.count { $0.isAlive }
