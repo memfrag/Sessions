@@ -10,7 +10,7 @@ import SwiftTerm
 ///
 /// The special `system` theme follows the macOS appearance via
 /// `configureNativeColors()` instead of fixed colors.
-struct TerminalTheme: Identifiable, Hashable {
+struct TerminalTheme: Identifiable, Hashable, Codable {
 
     static let systemThemeID = "system"
 

@@ -105,10 +105,13 @@ extension TerminalTheme {
         )
     ]
 
-    /// Resolves a theme ID, falling back to the system theme for unknown
-    /// IDs (e.g. a removed preset in a future version).
-    static func theme(withID id: String) -> TerminalTheme {
-        presets.first { $0.id == id } ?? presets[0]
+    /// Resolves a theme ID against the presets plus the user's imported
+    /// custom themes, falling back to the system theme for unknown IDs
+    /// (e.g. a removed preset or a deleted custom theme).
+    static func theme(withID id: String, custom: [TerminalTheme] = []) -> TerminalTheme {
+        presets.first { $0.id == id }
+            ?? custom.first { $0.id == id }
+            ?? presets[0]
     }
 
     /// Representative swatch colors for the settings picker row.

@@ -65,6 +65,9 @@ import KeyValueStore
         /// Whether pasting text with newlines asks for confirmation.
         case confirmMultilinePaste
 
+        /// User-imported terminal themes (e.g. from iTerm2 files).
+        case customTerminalThemes
+
         // <-- (1 / 3) Add key for new property here
     }
 
@@ -172,6 +175,13 @@ import KeyValueStore
         }
     }
 
+    /// User-imported terminal themes (e.g. from iTerm2 .itermcolors files).
+    var customTerminalThemes: [TerminalTheme] {
+        didSet {
+            store.save(customTerminalThemes, for: .customTerminalThemes)
+        }
+    }
+
     // <-- (2 / 3) Add property for new property here
 
     // MARK: Setup
@@ -202,6 +212,7 @@ import KeyValueStore
         attentionNotificationSoundEnabled = self.store.load(.attentionNotificationSoundEnabled, default: true)
 
         confirmMultilinePaste = self.store.load(.confirmMultilinePaste, default: true)
+        customTerminalThemes = self.store.load(.customTerminalThemes, default: [])
 
         // <-- (3 / 3) Add initializer for new property here.
     }

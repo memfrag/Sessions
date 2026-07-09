@@ -20,7 +20,7 @@ struct TerminalTabBar: View {
     /// The active terminal background, so the selected tab merges into the
     /// content below it.
     private var terminalBackground: Color {
-        let theme = TerminalTheme.theme(withID: settings.terminalThemeID)
+        let theme = TerminalTheme.theme(withID: settings.terminalThemeID, custom: settings.customTerminalThemes)
             .applying(settings.terminalThemeOverrides[settings.terminalThemeID])
         return Color(nsColor: theme.effectiveBackgroundColor)
     }

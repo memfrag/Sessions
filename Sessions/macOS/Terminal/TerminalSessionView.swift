@@ -55,7 +55,7 @@ struct TerminalSessionView: NSViewRepresentable {
     }
 
     private func applyAppearance(container: TerminalContainerView) {
-        let theme = TerminalTheme.theme(withID: settings.terminalThemeID)
+        let theme = TerminalTheme.theme(withID: settings.terminalThemeID, custom: settings.customTerminalThemes)
             .applying(settings.terminalThemeOverrides[settings.terminalThemeID])
         controller.applyAppearanceIfNeeded(
             theme: theme,
