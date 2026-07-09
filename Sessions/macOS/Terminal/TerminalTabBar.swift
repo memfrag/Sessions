@@ -2,6 +2,7 @@
 //  Copyright © 2026 Apparata AB. All rights reserved.
 //
 
+import AppKit
 import SessionsProtocol
 import SwiftUI
 
@@ -190,6 +191,14 @@ private struct TerminalTabItem: View {
         .contextMenu {
             Button("Rename…") {
                 beginRename()
+            }
+            Button("Reveal in Finder") {
+                // The tab's cwd (via OSC 7) when known, else the
+                // workspace root.
+                NSWorkspace.shared.selectFile(
+                    nil,
+                    inFileViewerRootedAtPath: controller.currentDirectory ?? workspace.rootPath
+                )
             }
             Button("Close Tab") {
                 model.requestCloseSession(id: session.id)
