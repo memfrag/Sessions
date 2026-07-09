@@ -106,33 +106,9 @@ private struct TerminalTabItem: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            if hasExited {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.caption2)
-                    .foregroundStyle(.orange)
-                    .help("Process exited")
-            } else if controller.claudeStatus == .needsInput && !isSelected {
-                Image(systemName: "bell.fill")
-                    .font(.caption2)
-                    .foregroundStyle(.orange)
-                    .help("Claude needs input")
-            } else if controller.claudeStatus == .working {
-                // Status, not attention: shown on the selected tab too.
-                Image(systemName: "hourglass")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .help("Claude is working")
-            } else if controller.claudeStatus == .done {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.caption2)
-                    .foregroundStyle(.green)
-                    .help("Claude is done")
-            } else if controller.needsAttention && !isSelected {
-                Image(systemName: "bell.fill")
-                    .font(.caption2)
-                    .foregroundStyle(.orange)
-                    .help("Needs attention")
-            }
+            leadingIcon
+                .font(.system(size: 13))
+                .frame(width: 16)
             if isRenaming {
                 TextField("Tab Name", text: $renameText)
                     .textFieldStyle(.plain)
@@ -154,6 +130,7 @@ private struct TerminalTabItem: View {
                     .truncationMode(.tail)
                     .help(directoryTooltip ?? title)
             }
+            Spacer(minLength: 0)
             Button {
                 model.requestCloseSession(id: session.id)
             } label: {
@@ -227,6 +204,36 @@ private struct TerminalTabItem: View {
             }
             model.moveSession(id: draggedID, toIndex: targetIndex)
             return true
+        }
+    }
+
+    /// Fixed leading icon slot: the terminal glyph normally, replaced by
+    /// the highest-priority status badge when there is one.
+    @ViewBuilder private var leadingIcon: some View {
+        if hasExited {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.orange)
+                .help("Process exited")
+        } else if controller.claudeStatus == .needsInput && !isSelected {
+            Image(systemName: "bell.fill")
+                .foregroundStyle(.orange)
+                .help("Claude needs input")
+        } else if controller.claudeStatus == .working {
+            // Status, not attention: shown on the selected tab too.
+            Image(systemName: "hourglass")
+                .foregroundStyle(.secondary)
+                .help("Claude is working")
+        } else if controller.claudeStatus == .done {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(.green)
+                .help("Claude is done")
+        } else if controller.needsAttention && !isSelected {
+            Image(systemName: "bell.fill")
+                .foregroundStyle(.orange)
+                .help("Needs attention")
+        } else {
+            Image(systemName: "terminal.fill")
+                .foregroundStyle(.secondary)
         }
     }
 
