@@ -2,7 +2,6 @@
 //  Copyright © 2026 Apparata AB. All rights reserved.
 //
 
-import AppKit
 import SessionsProtocol
 import SwiftUI
 
@@ -20,47 +19,9 @@ struct Sidebar: View {
             List(selection: $model.selectedWorkspaceID) {
                 Section(header: Text("Workspaces")) {
                     ForEach(model.workspaces) { workspace in
-                        NavigationLink(value: workspace.id) {
-                            VStack(alignment: .leading, spacing: 1) {
-                                HStack(spacing: 6) {
-                                    Label(workspace.name, systemImage: "terminal")
-                                    if model.workspaceNeedsAttention(workspace) {
-                                        Image(systemName: "bell.fill")
-                                            .font(.caption2)
-                                            .foregroundStyle(.orange)
-                                            .help("A session needs attention")
-                                    }
-                                }
-                                if let directory = model.currentDirectoryName(for: workspace) {
-                                    Text(directory)
-                                        .font(.caption2)
-                                        .foregroundStyle(.secondary)
-                                        .lineLimit(1)
-                                        .truncationMode(.middle)
-                                        .padding(.leading, 24)
-                                }
-                            }
-                            .badge(
-                                model.isRootMissing(for: workspace)
-                                    ? Text(Image(systemName: "exclamationmark.triangle.fill"))
-                                    : nil
-                            )
-                        }
-                        .contextMenu {
-                            Button("Rename…") {
-                                renameText = workspace.name
-                                workspaceToRename = workspace
-                            }
-                            Button("Reveal in Finder") {
-                                NSWorkspace.shared.selectFile(
-                                    nil,
-                                    inFileViewerRootedAtPath: workspace.rootPath
-                                )
-                            }
-                            Divider()
-                            Button("Delete Workspace", role: .destructive) {
-                                model.requestDeleteWorkspace(id: workspace.id)
-                            }
+                        WorkspaceSidebarItem(workspace: workspace) { workspace in
+                            renameText = workspace.name
+                            workspaceToRename = workspace
                         }
                     }
                     .onMove { source, destination in
