@@ -135,7 +135,10 @@ private struct SessionsMenuBarView: View {
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "terminal")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(
+                            WorkspaceColor.color(forID: workspace.colorID)
+                                .map(AnyShapeStyle.init) ?? AnyShapeStyle(.secondary)
+                        )
                     Text(workspace.name)
                         .lineLimit(1)
                     if model.workspaceNeedsAttention(workspace) {

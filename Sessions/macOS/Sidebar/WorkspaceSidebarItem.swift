@@ -18,10 +18,19 @@ struct WorkspaceSidebarItem: View {
     /// alert state.
     let onRename: (Workspace) -> Void
 
+    /// Invoked when the user chooses "Edit Workspace…"; the sidebar owns
+    /// the edit sheet state.
+    let onEdit: (Workspace) -> Void
+
     var body: some View {
         NavigationLink(value: workspace.id) {
             VStack(alignment: .leading, spacing: 1) {
                 HStack(spacing: 6) {
+                    if let color = WorkspaceColor.color(forID: workspace.colorID) {
+                        Circle()
+                            .fill(color)
+                            .frame(width: 8, height: 8)
+                    }
                     Text(workspace.name)
                         .fontWeight(.medium)
                     if model.workspaceNeedsAttention(workspace) {
@@ -50,6 +59,9 @@ struct WorkspaceSidebarItem: View {
         .contextMenu {
             Button("Rename…") {
                 onRename(workspace)
+            }
+            Button("Edit Workspace…") {
+                onEdit(workspace)
             }
             Button("Reveal in Finder") {
                 NSWorkspace.shared.selectFile(

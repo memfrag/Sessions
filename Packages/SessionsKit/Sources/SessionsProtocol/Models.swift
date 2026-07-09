@@ -47,13 +47,31 @@ public struct Workspace: Codable, Sendable, Hashable, Identifiable {
     /// Absolute path to the workspace's root directory.
     public var rootPath: String
 
+    /// Command typed into every NEW tab of this workspace right after its
+    /// shell spawns (e.g. auto-starting a dev server). Not run on session
+    /// restarts or when reviving dormant sessions after a server reboot.
+    public var startupCommand: String?
+
+    /// ID of a predefined accent color for the workspace, purely cosmetic.
+    /// Rendering is the client's business; the server just stores the ID.
+    public var colorID: String?
+
     /// The sessions (tabs) of the workspace, in tab order.
     public var sessions: [SessionInfo]
 
-    public init(id: UUID = UUID(), name: String, rootPath: String, sessions: [SessionInfo] = []) {
+    public init(
+        id: UUID = UUID(),
+        name: String,
+        rootPath: String,
+        startupCommand: String? = nil,
+        colorID: String? = nil,
+        sessions: [SessionInfo] = []
+    ) {
         self.id = id
         self.name = name
         self.rootPath = rootPath
+        self.startupCommand = startupCommand
+        self.colorID = colorID
         self.sessions = sessions
     }
 }

@@ -11,6 +11,8 @@ struct Sidebar: View {
 
     @State private var workspaceToRename: Workspace?
 
+    @State private var workspaceToEdit: Workspace?
+
     @State private var renameText = ""
 
     var body: some View {
@@ -22,6 +24,8 @@ struct Sidebar: View {
                         WorkspaceSidebarItem(workspace: workspace) { workspace in
                             renameText = workspace.name
                             workspaceToRename = workspace
+                        } onEdit: { workspace in
+                            workspaceToEdit = workspace
                         }
                     }
                     .onMove { source, destination in
@@ -55,6 +59,9 @@ struct Sidebar: View {
         .focusedSceneValue(\.workspacesModel, model)
         .sheet(isPresented: $model.isNewWorkspaceSheetPresented) {
             NewWorkspaceSheet()
+        }
+        .sheet(item: $workspaceToEdit) { workspace in
+            EditWorkspaceSheet(workspace: workspace)
         }
         .alert("Rename Workspace", isPresented: renameAlertPresented) {
             TextField("Name", text: $renameText)

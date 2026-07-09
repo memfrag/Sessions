@@ -86,15 +86,31 @@ final class WorkspacesModel {
 
     // MARK: - Workspace CRUD (forwarded to server)
 
-    func createWorkspace(name: String, rootPath: String) {
+    func createWorkspace(name: String, rootPath: String, startupCommand: String? = nil, colorID: String? = nil) {
         Task {
-            await serverManager.client.createWorkspace(name: name, rootPath: rootPath)
+            await serverManager.client.createWorkspace(
+                name: name,
+                rootPath: rootPath,
+                startupCommand: startupCommand,
+                colorID: colorID
+            )
         }
     }
 
     func renameWorkspace(id: Workspace.ID, name: String) {
         Task {
             await serverManager.client.renameWorkspace(id: id, name: name)
+        }
+    }
+
+    func updateWorkspace(id: Workspace.ID, name: String, startupCommand: String?, colorID: String?) {
+        Task {
+            await serverManager.client.updateWorkspace(
+                id: id,
+                name: name,
+                startupCommand: startupCommand,
+                colorID: colorID
+            )
         }
     }
 

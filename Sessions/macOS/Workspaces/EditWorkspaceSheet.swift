@@ -2,46 +2,47 @@
 //  Copyright © 2026 Apparata AB. All rights reserved.
 //
 
+import SessionsProtocol
 import SwiftUI
 
-/// Sheet for creating a new workspace: a name and a root directory.
-struct NewWorkspaceSheet: View {
+/// Sheet for editing a workspace's name, startup command, and color.
+/// The root directory is fixed at creation.
+struct EditWorkspaceSheet: View {
 
     @Environment(WorkspacesModel.self) private var model
 
     @Environment(\.dismiss) private var dismiss
 
-    @State private var name = ""
+    let workspace: Workspace
 
-    @State private var rootURL: URL?
+    @State private var name: String
 
-    @State private var startupCommand = ""
+    @State private var startupCommand: String
 
     @State private var colorID: String?
 
-    @State private var isFolderPickerPresented = false
+    init(workspace: Workspace) {
+        self.workspace = workspace
+        _name = State(initialValue: workspace.name)
+        _startupCommand = State(initialValue: workspace.startupCommand ?? "")
+        _colorID = State(initialValue: workspace.colorID)
+    }
 
     private var isValid: Bool {
-        !name.trimmingCharacters(in: .whitespaces).isEmpty && rootURL != nil
+        !name.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("New Workspace")
+            Text("Edit Workspace")
                 .font(.headline)
             Form {
                 TextField("Name:", text: $name)
                 LabeledContent("Directory:") {
-                    HStack {
-                        Text(rootURL?.path(percentEncoded: false) ?? "No directory selected")
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                            .foregroundStyle(rootURL == nil ? .secondary : .primary)
-                        Spacer()
-                        Button("Choose…") {
-                            isFolderPickerPresented = true
-                        }
-                    }
+                    Text((workspace.rootPath as NSString).abbreviatingWithTildeInPath)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                        .foregroundStyle(.secondary)
                 }
                 TextField("Startup Command:", text: $startupCommand, prompt: Text("Optional"))
                 Text("Runs in each new tab of this workspace.")
@@ -57,8 +58,8 @@ struct NewWorkspaceSheet: View {
                     dismiss()
                 }
                 .keyboardShortcut(.cancelAction)
-                Button("Create") {
-                    createWorkspace()
+                Button("Save") {
+                    save()
                 }
                 .keyboardShortcut(.defaultAction)
                 .disabled(!isValid)
@@ -66,25 +67,13 @@ struct NewWorkspaceSheet: View {
         }
         .padding(20)
         .frame(width: 420)
-        .fileImporter(
-            isPresented: $isFolderPickerPresented,
-            allowedContentTypes: [.folder]
-        ) { result in
-            if case .success(let url) = result {
-                rootURL = url
-                if name.trimmingCharacters(in: .whitespaces).isEmpty {
-                    name = url.lastPathComponent
-                }
-            }
-        }
     }
 
-    private func createWorkspace() {
-        guard let rootURL else { return }
+    private func save() {
         let command = startupCommand.trimmingCharacters(in: .whitespaces)
-        model.createWorkspace(
+        model.updateWorkspace(
+            id: workspace.id,
             name: name.trimmingCharacters(in: .whitespaces),
-            rootPath: rootURL.path(percentEncoded: false),
             startupCommand: command.isEmpty ? nil : command,
             colorID: colorID
         )

@@ -138,4 +138,46 @@ struct FrameCodecTests {
             _ = try FrameEncoder.encode(.output(sessionID: UUID(), bytes: bytes))
         }
     }
+
+    /// A v1.1-era `Workspace` JSON without the newer optional fields must
+    /// keep decoding (old state.json files and old peers).
+    @Test func workspaceDecodesWithoutNewerOptionalFields() throws {
+        let json = """
+        {"id":"11111111-2222-3333-4444-555555555555","name":"Old","rootPath":"/tmp","sessions":[]}
+        """
+        let workspace = try JSONDecoder().decode(Workspace.self, from: Data(json.utf8))
+        #expect(workspace.name == "Old")
+        #expect(workspace.startupCommand == nil)
+        #expect(workspace.colorID == nil)
+    }
+
+    /// A `createWorkspace` frame from an old client (no startupCommand or
+    /// colorID keys) must decode into the real case, not `.unknownMessage`.
+    @Test func createWorkspaceDecodesWithoutNewerOptionalFields() throws {
+        let payload = """
+        {"createWorkspace":{"name":"Old","rootPath":"/tmp"}}
+        """
+        let message = try JSONDecoder().decode(ControlMessage.self, from: Data(payload.utf8))
+        guard case .createWorkspace(let name, let rootPath, let startupCommand, let colorID) = message else {
+            Issue.record("Expected createWorkspace, got \(message)")
+            return
+        }
+        #expect(name == "Old")
+        #expect(rootPath == "/tmp")
+        #expect(startupCommand == nil)
+        #expect(colorID == nil)
+    }
+
+    @Test func newWorkspaceMessagesRoundTrip() throws {
+        let messages: [ControlMessage] = [
+            .createWorkspace(name: "W", rootPath: "/tmp", startupCommand: "claude", colorID: "teal"),
+            .updateWorkspace(id: UUID(), name: "W2", startupCommand: nil, colorID: "red")
+        ]
+        for message in messages {
+            let encoded = try FrameEncoder.encode(.control(message))
+            var decoder = FrameDecoder()
+            let frames = try decoder.append(encoded)
+            #expect(frames == [.control(message)])
+        }
+    }
 }

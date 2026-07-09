@@ -376,6 +376,115 @@ struct ServerEndToEndTests {
         #expect(busy, "Shell running sleep should be busy")
     }
 
+    /// The workspace startup command is typed into new tabs' shells
+    /// (queued as typeahead right after spawn, consumed at first prompt),
+    /// and must NOT run again when a session is restarted.
+    @Test func startupCommandRunsInNewTabsButNotOnRestart() async throws {
+        let paths = makeTempPaths()
+        defer { try? FileManager.default.removeItem(atPath: paths.directory) }
+        let (_, serverTask) = try startServer(socket: paths.socket, state: paths.state)
+        defer { serverTask.cancel() }
+        let (client, _) = try await connectClient(socket: paths.socket)
+
+        await client.createWorkspace(
+            name: "Work",
+            rootPath: "/tmp",
+            startupCommand: "echo STARTUP-$((100 + 23))",
+            colorID: "teal"
+        )
+        // The workspace auto-creates one tab; the startup command runs there.
+        let state = await waitForState(client) { state in
+            state.workspaces.first.map { !$0.sessions.isEmpty } ?? false
+        }
+        #expect(state?.workspaces.first?.startupCommand == "echo STARTUP-$((100 + 23))")
+        #expect(state?.workspaces.first?.colorID == "teal")
+        let session = try #require(state?.workspaces.first?.sessions.first)
+
+        let attachment = try await client.attach(sessionID: session.id, cols: 80, rows: 24)
+        var collected = [UInt8]()
+        var sawStartupMarker = false
+        let deadline = ContinuousClock.now + .seconds(10)
+        for await event in attachment.events {
+            if case .output(let chunk) = event {
+                collected.append(contentsOf: chunk)
+            }
+            if String(decoding: collected, as: UTF8.self).contains("STARTUP-123") {
+                sawStartupMarker = true
+                break
+            }
+            if ContinuousClock.now > deadline {
+                break
+            }
+        }
+        #expect(sawStartupMarker, "Expected the startup command output STARTUP-123 in the new tab")
+
+        // Exit the shell and restart the session: the startup command must
+        // not run again (only the one echo from the original spawn is in
+        // the scrollback).
+        attachment.sendInput(Array("exit\n".utf8))
+        _ = await waitForState(client) { state in
+            state.workspaces.first?.sessions.first.map { !$0.isAlive } ?? false
+        }
+        await client.restartSession(id: session.id)
+        _ = await waitForState(client) { state in
+            state.workspaces.first?.sessions.first?.isAlive ?? false
+        }
+        await client.detach(sessionID: session.id)
+        let reattachment = try await client.attach(sessionID: session.id, cols: 80, rows: 24)
+        reattachment.sendInput(Array("echo PROBE-$((200 + 22))\n".utf8))
+        var replayed = [UInt8]()
+        var sawProbe = false
+        let probeDeadline = ContinuousClock.now + .seconds(10)
+        for await event in reattachment.events {
+            if case .output(let chunk) = event {
+                replayed.append(contentsOf: chunk)
+            }
+            if String(decoding: replayed, as: UTF8.self).contains("PROBE-222") {
+                sawProbe = true
+                break
+            }
+            if ContinuousClock.now > probeDeadline {
+                break
+            }
+        }
+        #expect(sawProbe)
+        // At most one occurrence: the original run may appear in replayed
+        // scrollback (once scrollback survives restarts), but a restart
+        // must never run the command a second time.
+        let text = String(decoding: replayed, as: UTF8.self)
+        let startupRuns = text.components(separatedBy: "STARTUP-123").count - 1
+        #expect(startupRuns <= 1, "Restart must not re-run the startup command; saw \(startupRuns) run(s)")
+    }
+
+    /// updateWorkspace edits name, startup command, and color, and the
+    /// changes survive a StateStore round trip.
+    @Test func updateWorkspaceRoundTrip() async throws {
+        let paths = makeTempPaths()
+        defer { try? FileManager.default.removeItem(atPath: paths.directory) }
+        let (_, serverTask) = try startServer(socket: paths.socket, state: paths.state)
+        defer { serverTask.cancel() }
+        let (client, _) = try await connectClient(socket: paths.socket)
+
+        await client.createWorkspace(name: "Before", rootPath: "/tmp")
+        let state1 = await waitForState(client) { $0.workspaces.count == 1 }
+        let workspaceID = try #require(state1?.workspaces.first?.id)
+
+        await client.updateWorkspace(
+            id: workspaceID,
+            name: "After",
+            startupCommand: "npm run dev",
+            colorID: "purple"
+        )
+        let state2 = await waitForState(client) { $0.workspaces.first?.name == "After" }
+        #expect(state2?.workspaces.first?.startupCommand == "npm run dev")
+        #expect(state2?.workspaces.first?.colorID == "purple")
+
+        let persisted = StateStore(path: paths.state).load()
+        #expect(persisted.workspaces.first?.name == "After")
+        #expect(persisted.workspaces.first?.startupCommand == "npm run dev")
+        #expect(persisted.workspaces.first?.colorID == "purple")
+    }
+
     /// A verifying client must refuse a listener that is not a signed
     /// sessions-server binary. The in-process test server doubles as the
     /// impostor: the peer process on its socket is the test runner.

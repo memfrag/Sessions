@@ -23,8 +23,11 @@ public enum ControlMessage: Codable, Sendable, Equatable {
 
     // MARK: Workspace CRUD
 
-    case createWorkspace(name: String, rootPath: String)
+    case createWorkspace(name: String, rootPath: String, startupCommand: String?, colorID: String?)
     case renameWorkspace(id: UUID, name: String)
+    /// Edits the workspace's name, startup command, and color together
+    /// (the edit sheet). `renameWorkspace` stays for quick renames.
+    case updateWorkspace(id: UUID, name: String, startupCommand: String?, colorID: String?)
     case deleteWorkspace(id: UUID)
     case moveWorkspace(id: UUID, toIndex: Int)
 

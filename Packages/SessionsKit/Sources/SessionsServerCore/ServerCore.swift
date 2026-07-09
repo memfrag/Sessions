@@ -130,8 +130,13 @@ public actor ServerCore {
             persistAndExit(code: 1)
         case .shutdown:
             persistAndExit(code: 0)
-        case .createWorkspace(let name, let rootPath):
-            let workspace = Workspace(name: name, rootPath: rootPath)
+        case .createWorkspace(let name, let rootPath, let startupCommand, let colorID):
+            let workspace = Workspace(
+                name: name,
+                rootPath: rootPath,
+                startupCommand: startupCommand,
+                colorID: colorID
+            )
             state.workspaces.append(workspace)
             persistAndBroadcast()
             // A workspace starts with one live tab.
@@ -143,6 +148,12 @@ public actor ServerCore {
         case .renameWorkspace(let id, let name):
             guard let index = state.workspaces.firstIndex(where: { $0.id == id }) else { return }
             state.workspaces[index].name = name
+            persistAndBroadcast()
+        case .updateWorkspace(let id, let name, let startupCommand, let colorID):
+            guard let index = state.workspaces.firstIndex(where: { $0.id == id }) else { return }
+            state.workspaces[index].name = name
+            state.workspaces[index].startupCommand = startupCommand
+            state.workspaces[index].colorID = colorID
             persistAndBroadcast()
         case .deleteWorkspace(let id):
             guard let index = state.workspaces.firstIndex(where: { $0.id == id }) else { return }
@@ -259,6 +270,15 @@ public actor ServerCore {
             sessions[info.id] = nil
             connection.send(.control(.error(code: .spawnFailed, message: "\(error)")))
             return
+        }
+        // The startup command applies to NEW tabs only — never restarts or
+        // dormant revivals, which restore prior context instead. The bytes
+        // queue as TTY typeahead and the shell consumes them at the first
+        // prompt, echoing the command as if typed. (Canonical-mode
+        // typeahead is limited to ~1 KB; fine for realistic commands.)
+        if let command = workspace.startupCommand?.trimmingCharacters(in: .whitespaces),
+           !command.isEmpty {
+            await session.write(Array((command + "\n").utf8))
         }
         state.workspaces[workspaceIndex].sessions.append(info)
         persistAndBroadcast()

@@ -258,12 +258,26 @@ public actor SessionServerClient {
         connection?.send(.control(message))
     }
 
-    public func createWorkspace(name: String, rootPath: String) {
-        send(.createWorkspace(name: name, rootPath: rootPath))
+    public func createWorkspace(
+        name: String,
+        rootPath: String,
+        startupCommand: String? = nil,
+        colorID: String? = nil
+    ) {
+        send(.createWorkspace(
+            name: name,
+            rootPath: rootPath,
+            startupCommand: startupCommand,
+            colorID: colorID
+        ))
     }
 
     public func renameWorkspace(id: UUID, name: String) {
         send(.renameWorkspace(id: id, name: name))
+    }
+
+    public func updateWorkspace(id: UUID, name: String, startupCommand: String?, colorID: String?) {
+        send(.updateWorkspace(id: id, name: name, startupCommand: startupCommand, colorID: colorID))
     }
 
     public func deleteWorkspace(id: UUID) {
