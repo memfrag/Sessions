@@ -40,6 +40,7 @@ struct WorkspaceSidebarItem: View {
                         .padding(.top, 2)
                 }
             }
+            .padding(2)
             .badge(
                 model.isRootMissing(for: workspace)
                     ? Text(Image(systemName: "exclamationmark.triangle.fill"))
