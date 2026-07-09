@@ -47,6 +47,11 @@ struct Sidebar: View {
                 ServerStatusView(status: model.serverManager.status)
             }
         }
+        .overlay {
+            if model.isCommandPaletteVisible {
+                CommandPaletteOverlay()
+            }
+        }
         .focusedSceneValue(\.workspacesModel, model)
         .sheet(isPresented: $model.isNewWorkspaceSheetPresented) {
             NewWorkspaceSheet()

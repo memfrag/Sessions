@@ -12,6 +12,8 @@ struct TerminalSessionView: NSViewRepresentable {
 
     @Environment(AppSettings.self) private var settings
 
+    @Environment(WorkspacesModel.self) private var model
+
     let controller: TerminalSessionController
 
     /// Whether this session is the selected tab. The selected terminal grabs
@@ -37,9 +39,16 @@ struct TerminalSessionView: NSViewRepresentable {
             nsView.hostedView = terminalView
         }
         applyAppearance(container: nsView)
-        guard isSelected, !controller.isFindBarVisible else { return }
+        guard isSelected, !controller.isFindBarVisible, !model.isCommandPaletteVisible else { return }
+        // The conditions are re-checked when the block fires: a grab
+        // scheduled just before the find bar or command palette opened
+        // must not steal focus back from their text fields.
+        let model = self.model
+        let controller = self.controller
         DispatchQueue.main.async {
-            guard let window = terminalView.window,
+            guard !controller.isFindBarVisible,
+                  !model.isCommandPaletteVisible,
+                  let window = terminalView.window,
                   window.firstResponder !== terminalView else { return }
             window.makeFirstResponder(terminalView)
         }

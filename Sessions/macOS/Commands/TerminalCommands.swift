@@ -47,6 +47,14 @@ struct TerminalCommands: Commands {
             .keyboardShortcut("w", modifiers: [.command, .shift])
         }
 
+        CommandGroup(after: .sidebar) {
+            Button("Command Palette…") {
+                model?.isCommandPaletteVisible.toggle()
+            }
+            .keyboardShortcut("p", modifiers: [.command, .shift])
+            .disabled(model == nil)
+        }
+
         CommandGroup(after: .textEditing) {
             Button("Find…") {
                 model?.selectedTerminalController?.showFindBar()

@@ -23,6 +23,10 @@ final class WorkspacesModel {
 
     var isNewWorkspaceSheetPresented = false
 
+    /// Whether the command palette overlay is shown. The terminal focus
+    /// grab in `TerminalSessionView` yields while this is true.
+    var isCommandPaletteVisible = false
+
     /// Tab close awaiting user confirmation because the session is busy.
     var sessionPendingClose: SessionInfo.ID?
 
