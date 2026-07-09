@@ -16,7 +16,8 @@ struct FrameCodecTests {
         ])
         let messages: [ControlMessage] = [
             .clientHello(protocolVersion: 1, appVersion: "1.0"),
-            .serverHello(protocolVersion: 1, serverVersion: "1.0", state: state),
+            .serverHello(protocolVersion: 1, serverVersion: "1.0", state: state, buildID: "ABC-123"),
+            .serverHello(protocolVersion: 1, serverVersion: "1.0", state: state, buildID: nil),
             .createSession(workspaceID: UUID(), inheritFromSessionID: UUID()),
             .createSession(workspaceID: UUID(), inheritFromSessionID: nil),
             .attach(sessionID: UUID(), cols: 120, rows: 40),
@@ -149,6 +150,21 @@ struct FrameCodecTests {
         #expect(workspace.name == "Old")
         #expect(workspace.startupCommand == nil)
         #expect(workspace.colorID == nil)
+    }
+
+    /// A `serverHello` from an old server (no buildID key) must decode
+    /// into the real case.
+    @Test func serverHelloDecodesWithoutBuildID() throws {
+        let payload = """
+        {"serverHello":{"protocolVersion":2,"serverVersion":"1.0","state":{"workspaces":[]}}}
+        """
+        let message = try JSONDecoder().decode(ControlMessage.self, from: Data(payload.utf8))
+        guard case .serverHello(let version, _, _, let buildID) = message else {
+            Issue.record("Expected serverHello, got \(message)")
+            return
+        }
+        #expect(version == 2)
+        #expect(buildID == nil)
     }
 
     /// A `createWorkspace` frame from an old client (no startupCommand or

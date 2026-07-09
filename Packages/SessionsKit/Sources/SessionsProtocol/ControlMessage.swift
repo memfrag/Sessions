@@ -13,7 +13,10 @@ public enum ControlMessage: Codable, Sendable, Equatable {
     // MARK: Handshake / server lifecycle
 
     case clientHello(protocolVersion: Int, appVersion: String)
-    case serverHello(protocolVersion: Int, serverVersion: String, state: ServerState)
+    /// `buildID` is the server binary's Mach-O LC_UUID (from the running
+    /// image), letting the app detect a server that predates the binary
+    /// embedded in the current bundle. Optional: additive field.
+    case serverHello(protocolVersion: Int, serverVersion: String, state: ServerState, buildID: String?)
     case protocolMismatch(serverProtocolVersion: Int)
     /// Server persists state and exits with code 1, so launchd relaunches
     /// the (possibly updated) binary.

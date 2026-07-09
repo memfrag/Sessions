@@ -49,6 +49,11 @@ final class ServerManager {
 
     private(set) var status: Status = .idle
 
+    /// True when the running server's build UUID differs from the server
+    /// binary embedded in this app bundle — i.e. the server predates the
+    /// current build and needs a restart to pick up server-side changes.
+    private(set) var isServerBuildStale = false
+
     let client = SessionServerClient()
 
     var onStateChanged: ((ServerState) -> Void)?
@@ -142,6 +147,7 @@ final class ServerManager {
                 let state = try await client.connect(socketPath: socketPath, appVersion: appVersion)
                 status = .connected
                 didLaunchServer = false
+                await updateServerBuildStatus()
                 onStateChanged?(state)
                 onConnected?()
                 return
@@ -183,6 +189,25 @@ final class ServerManager {
             }
             try? await Task.sleep(for: delay)
             delay = min(delay * 2, .seconds(5))
+        }
+    }
+
+    /// Compares the connected server's reported build UUID with the server
+    /// binary embedded in this bundle. A mismatch means the server is
+    /// running an older (or different) build and new server-side features
+    /// silently do nothing until it restarts.
+    private func updateServerBuildStatus() async {
+        // An externally managed dev server is expected to differ.
+        guard strategy != .external,
+              let reported = await client.serverBuildID,
+              let embeddedURL = Bundle.main.url(forAuxiliaryExecutable: "sessions-server"),
+              let embedded = BuildID.ofBinary(atPath: embeddedURL.path) else {
+            isServerBuildStale = false
+            return
+        }
+        isServerBuildStale = reported != embedded
+        if isServerBuildStale {
+            Self.logger.warning("Server build \(reported) != embedded \(embedded); restart needed")
         }
     }
 

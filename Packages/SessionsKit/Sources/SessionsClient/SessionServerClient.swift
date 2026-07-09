@@ -66,6 +66,11 @@ public actor SessionServerClient {
 
     public private(set) var isConnected = false
 
+    /// Mach-O build UUID reported by the connected server's hello, or nil
+    /// for servers predating the field. Used to detect a running server
+    /// that is older than the binary embedded in the app bundle.
+    public private(set) var serverBuildID: String?
+
     /// Whether `connect` verifies the server's code signature. On by
     /// default; tests running an in-process ServerCore opt out (the peer
     /// is the test runner, not the sessions-server binary).
@@ -126,8 +131,9 @@ public actor SessionServerClient {
             helloContinuation = continuation
         }
         switch reply {
-        case .serverHello(_, _, let state):
+        case .serverHello(_, _, let state, let buildID):
             isConnected = true
+            serverBuildID = buildID
             return state
         case .protocolMismatch(let serverProtocolVersion):
             disconnectInternal(notify: false)

@@ -143,7 +143,8 @@ public actor ServerCore {
                 connection.send(.control(.serverHello(
                     protocolVersion: SessionsProtocolInfo.version,
                     serverVersion: serverVersion,
-                    state: state
+                    state: state,
+                    buildID: BuildID.current()
                 )))
             } else {
                 Self.logger.warning("Protocol mismatch: app \(appVersion) speaks \(protocolVersion)")

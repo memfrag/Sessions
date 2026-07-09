@@ -111,7 +111,7 @@ private struct SessionsMenuBarView: View {
 
     private var serverStatusColor: Color {
         switch model.serverManager.status {
-        case .connected: .green
+        case .connected: model.serverManager.isServerBuildStale ? .orange : .green
         case .connecting, .idle: .yellow
         case .needsApproval, .failed: .red
         }
@@ -119,7 +119,10 @@ private struct SessionsMenuBarView: View {
 
     private var serverStatusText: String {
         switch model.serverManager.status {
-        case .connected: "Server running"
+        case .connected:
+            model.serverManager.isServerBuildStale
+                ? "Server running (older build)"
+                : "Server running"
         case .connecting: "Connecting to server…"
         case .idle: "Starting…"
         case .needsApproval: "Needs approval"

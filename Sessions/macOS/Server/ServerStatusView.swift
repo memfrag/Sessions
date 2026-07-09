@@ -15,8 +15,12 @@ struct ServerStatusView: View {
 
     var body: some View {
         switch status {
-        case .idle, .connected:
+        case .idle:
             EmptyView()
+        case .connected:
+            if model.serverManager.isServerBuildStale {
+                staleBuildBanner
+            }
         case .connecting:
             banner {
                 ProgressView()
@@ -31,6 +35,21 @@ struct ServerStatusView: View {
                     .foregroundStyle(.orange)
                 Text(message)
             }
+        }
+    }
+
+    /// The running server predates this build; new server-side features
+    /// silently do nothing until it restarts.
+    private var staleBuildBanner: some View {
+        banner {
+            Image(systemName: "arrow.triangle.2.circlepath")
+                .foregroundStyle(.orange)
+            Text("The session server is running an older build.")
+            Button("Restart Server") {
+                model.serverManager.restartServer()
+            }
+            .controlSize(.small)
+            .help("Ends all running sessions and starts the updated server. The workspace layout is kept.")
         }
     }
 
