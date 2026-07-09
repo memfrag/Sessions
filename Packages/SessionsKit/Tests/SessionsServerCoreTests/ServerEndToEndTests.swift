@@ -176,6 +176,48 @@ struct ServerEndToEndTests {
         #expect(restartedState != nil)
     }
 
+    @Test func degenerateResizeDoesNotCrashServer() async throws {
+        let paths = makeTempPaths()
+        defer { try? FileManager.default.removeItem(atPath: paths.directory) }
+        let (_, serverTask) = try startServer(socket: paths.socket, state: paths.state)
+        defer { serverTask.cancel() }
+        let (client, _) = try await connectClient(socket: paths.socket)
+
+        await client.createWorkspace(name: "Work", rootPath: "/tmp")
+        let state = await waitForState(client) { state in
+            state.workspaces.first.map { !$0.sessions.isEmpty } ?? false
+        }
+        let session = try #require(state?.workspaces.first?.sessions.first)
+        let attachment = try await client.attach(sessionID: session.id, cols: 80, rows: 24)
+
+        // Out-of-range sizes (negative, zero, > UInt16.max) previously
+        // trapped in PtyProcess.resize and killed the whole server.
+        attachment.resize(cols: -5, rows: -1)
+        attachment.resize(cols: 0, rows: 0)
+        attachment.resize(cols: 100_000, rows: 99_999)
+        try await Task.sleep(for: .milliseconds(300))
+
+        // The server must still be alive: a normal resize + echo still works.
+        attachment.resize(cols: 80, rows: 24)
+        attachment.sendInput(Array("echo STILL-ALIVE\n".utf8))
+        var collected = [UInt8]()
+        var alive = false
+        let deadline = ContinuousClock.now + .seconds(10)
+        for await event in attachment.events {
+            if case .output(let chunk) = event {
+                collected.append(contentsOf: chunk)
+            }
+            if String(decoding: collected, as: UTF8.self).contains("STILL-ALIVE") {
+                alive = true
+                break
+            }
+            if ContinuousClock.now > deadline {
+                break
+            }
+        }
+        #expect(alive, "Server should survive out-of-range resizes")
+    }
+
     @Test func cwdInheritancePrefersClientReported() async throws {
         let paths = makeTempPaths()
         defer { try? FileManager.default.removeItem(atPath: paths.directory) }

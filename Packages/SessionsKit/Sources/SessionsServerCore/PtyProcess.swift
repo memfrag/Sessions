@@ -32,12 +32,7 @@ final class PtyProcess {
         cols: Int,
         rows: Int
     ) throws {
-        var windowSize = winsize(
-            ws_row: UInt16(rows),
-            ws_col: UInt16(cols),
-            ws_xpixel: 0,
-            ws_ypixel: 0
-        )
+        var windowSize = Self.windowSize(cols: cols, rows: rows)
         // argv[0] first, then the arguments.
         guard let argv = Self.allocateCStringArray(args),
               let envp = Self.allocateCStringArray(environment),
@@ -69,13 +64,19 @@ final class PtyProcess {
     }
 
     func resize(cols: Int, rows: Int) {
-        var windowSize = winsize(
-            ws_row: UInt16(rows),
-            ws_col: UInt16(cols),
-            ws_xpixel: 0,
-            ws_ypixel: 0
-        )
+        var windowSize = Self.windowSize(cols: cols, rows: rows)
         _ = ioctl(masterFd, TIOCSWINSZ, &windowSize)
+    }
+
+    /// Builds a `winsize`, clamping to a valid range. A terminal needs at
+    /// least 1×1, and the fields are `UInt16`, so a stray out-of-range size
+    /// (e.g. a transient negative value from the client during a window
+    /// resize) must never reach the `UInt16` conversion — it would trap and
+    /// crash the whole server, taking every session with it.
+    private static func windowSize(cols: Int, rows: Int) -> winsize {
+        let safeCols = UInt16(min(max(cols, 1), Int(UInt16.max)))
+        let safeRows = UInt16(min(max(rows, 1), Int(UInt16.max)))
+        return winsize(ws_row: safeRows, ws_col: safeCols, ws_xpixel: 0, ws_ypixel: 0)
     }
 
     /// Process group currently in the foreground on the terminal.
