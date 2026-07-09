@@ -9,15 +9,13 @@ public struct HelpWindow: Scene {
     public static let windowID = "help"
             
     public var body: some Scene {
-        Window("Help", id: Self.windowID) {
-            VStack {
-                Text("No help available.")
-            }
-            .frame(minWidth: 500, minHeight: 350)
+        Window("Sessions Help", id: Self.windowID) {
+            HelpContent()
+                .frame(minWidth: 520, minHeight: 400)
         }
         .commandsRemoved() // Don't show window in Windows menu
         .defaultPosition(.center)
-        .defaultSize(width: 500, height: 350)
+        .defaultSize(width: 600, height: 520)
         .windowResizability(.contentMinSize)
     }
 }
