@@ -7,10 +7,10 @@ import AppKit
 /// Layer-backed container that provides the terminal's inner margin and
 /// paints it in the terminal's background color.
 ///
-/// The hosted terminal view is laid out in `layout()` rather than with
-/// autoresizing: the container is created with a zero frame, and insetting
-/// a zero rect yields a negative-size frame that autoresizing would then
-/// propagate garbage from.
+/// The hosted terminal view is positioned in `setFrameSize` (reliably
+/// called on every resize, unlike `layout()` for a non-Auto-Layout view)
+/// rather than with autoresizing, which would misbehave from the initial
+/// zero frame.
 ///
 /// Uses `updateLayer` so dynamic colors (the system theme's
 /// `textBackgroundColor`) re-resolve when the effective appearance changes.
@@ -22,7 +22,7 @@ final class TerminalContainerView: NSView {
     /// The terminal view to keep inset within the container.
     weak var hostedView: NSView? {
         didSet {
-            needsLayout = true
+            layoutHostedView()
         }
     }
 
@@ -44,15 +44,24 @@ final class TerminalContainerView: NSView {
         nil
     }
 
+    override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize)
+        layoutHostedView()
+    }
+
     override func layout() {
         super.layout()
+        layoutHostedView()
+    }
+
+    private func layoutHostedView() {
         guard let hostedView else { return }
         let inset = Self.inset
-        guard bounds.width > inset * 2, bounds.height > inset * 2 else {
+        if bounds.width > inset * 2, bounds.height > inset * 2 {
+            hostedView.frame = bounds.insetBy(dx: inset, dy: inset)
+        } else {
             hostedView.frame = bounds
-            return
         }
-        hostedView.frame = bounds.insetBy(dx: inset, dy: inset)
     }
 
     override func updateLayer() {
