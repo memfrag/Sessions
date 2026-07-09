@@ -73,6 +73,13 @@ public final class UnixSocketConnection: Sendable {
         UnixSocketConnection(fd: try SocketAddress.connect(to: path))
     }
 
+    /// Whether the process on the other end satisfies the policy. Used by
+    /// clients to verify the server's code signature before trusting the
+    /// connection (the server verifies clients at accept time instead).
+    public func peerIsAuthorized(by policy: PeerPolicy) -> Bool {
+        PeerVerifier.isAuthorized(fd: fd, policy: policy)
+    }
+
     /// Enqueues a frame for writing. Silently drops frames once closed.
     public func send(_ frame: Frame) {
         guard let bytes = try? FrameEncoder.encode(frame) else {

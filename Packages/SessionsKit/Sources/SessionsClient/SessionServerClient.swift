@@ -15,6 +15,9 @@ public enum SessionServerClientError: Error {
     /// The server accepted the connection but never answered the hello
     /// (wedged server). The connect loop escalates by killing it.
     case handshakeTimeout
+    /// The process listening on the socket is not a properly signed
+    /// sessions-server (e.g. a same-user impostor squatting the path).
+    case untrustedServer
 }
 
 /// Events surfaced to the app outside of per-session output.
@@ -63,16 +66,42 @@ public actor SessionServerClient {
 
     public private(set) var isConnected = false
 
-    public init() {
+    /// Whether `connect` verifies the server's code signature. On by
+    /// default; tests running an in-process ServerCore opt out (the peer
+    /// is the test runner, not the sessions-server binary).
+    private let verifiesServerSignature: Bool
+
+    public init(verifiesServerSignature: Bool = true) {
+        self.verifiesServerSignature = verifiesServerSignature
         (events, eventsContinuation) = AsyncStream.makeStream()
     }
 
     // MARK: - Connection
 
+    private var shouldVerifyServer: Bool {
+        #if DEBUG
+        // Same dev/test escape hatch the server honors for its side.
+        if ProcessInfo.processInfo.environment["SESSIONS_INSECURE_SOCKET"] == "1" {
+            return false
+        }
+        #endif
+        return verifiesServerSignature
+    }
+
     /// Connects, performs the handshake, and returns the initial state.
     public func connect(socketPath: String, appVersion: String) async throws -> ServerState {
         disconnectInternal(notify: false)
         let connection = try UnixSocketConnection.connect(to: socketPath)
+        // Mirror image of the server's client verification: never send
+        // anything (keystrokes end up on this socket) to a peer that is
+        // not a properly signed sessions-server.
+        if shouldVerifyServer {
+            guard connection.peerIsAuthorized(by: .trustedSessionsServer()) else {
+                connection.close()
+                Self.logger.error("Rejecting socket peer: not a trusted sessions-server")
+                throw SessionServerClientError.untrustedServer
+            }
+        }
         self.connection = connection
         readTask = Task {
             // This task inherits the actor's isolation, so frame handling

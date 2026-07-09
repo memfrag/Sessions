@@ -23,6 +23,21 @@ public enum PeerPolicy: Sendable {
     /// ad-hoc identifiers alone are forgeable, so release builds should
     /// pin the Developer ID team.
     case signedClients(identifiers: [String], identifierPrefixes: [String], teamID: String?)
+
+    /// The policy a client uses to verify that the peer on the other end
+    /// of the socket really is the sessions-server binary — the mirror
+    /// image of the server verifying its clients. Same-user malware could
+    /// otherwise squat the socket path and impersonate the server (and
+    /// receive every keystroke). The team is pinned to this process's own
+    /// signing team: nil for ad-hoc dev builds (identifier-only), the real
+    /// team for Developer ID builds (unforgeable).
+    public static func trustedSessionsServer() -> PeerPolicy {
+        .signedClients(
+            identifiers: ["sessions-server"],
+            identifierPrefixes: ["sessions-server-"],
+            teamID: PeerVerifier.ownTeamIdentifier()
+        )
+    }
 }
 
 /// Verifies connecting peers against a `PeerPolicy` using the socket's
@@ -107,14 +122,24 @@ public enum PeerVerifier {
               let code else {
             return nil
         }
-        guard SecCodeCheckValidity(code, [], nil) == errSecSuccess else {
-            return nil
-        }
+        // Deliberately NO SecCodeCheckValidity here: it compares the
+        // running process against its on-disk executable and fails with
+        // errSecCSStaticCodeChanged (-67034) once the binary has been
+        // replaced — but "the binary was updated while the old process
+        // keeps running" is a scenario this app is designed to survive
+        // (the server outlives rebuilds and app updates). The signing
+        // identifier and team below come from the kernel-cached code
+        // directory of the RUNNING image, which the kernel validated at
+        // exec and a peer cannot spoof; that is exactly what the policy
+        // pins.
+        //
+        // Interrogate the DYNAMIC code object, never a static-code
+        // conversion (same on-disk problem). The C API accepts a
+        // SecCodeRef wherever a SecStaticCodeRef is expected; only
+        // Swift's imported signature is narrower, hence the cast.
+        let codeAsStatic = unsafeBitCast(code, to: SecStaticCode.self)
         var info: CFDictionary?
-        var staticCode: SecStaticCode?
-        guard SecCodeCopyStaticCode(code, [], &staticCode) == errSecSuccess,
-              let staticCode,
-              SecCodeCopySigningInformation(staticCode, [], &info) == errSecSuccess,
+        guard SecCodeCopySigningInformation(codeAsStatic, [], &info) == errSecSuccess,
               let dictionary = info as? [CFString: Any],
               let identifier = dictionary[kSecCodeInfoIdentifier] as? String else {
             return nil

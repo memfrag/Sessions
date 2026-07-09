@@ -155,6 +155,14 @@ final class ServerManager {
             } catch SessionServerClientError.handshakeTimeout {
                 Self.logger.error("Handshake timed out; server may be wedged")
                 wedgedFailures += 1
+            } catch SessionServerClientError.untrustedServer {
+                // Deterministic rejection, not a startup race: whatever
+                // listens on the socket is not a signed sessions-server.
+                // Say so instead of spinning, and escalate to the kill
+                // path — correct for a squatter and for a stale server.
+                Self.logger.error("Peer on the socket is not a trusted sessions-server")
+                status = .failed("The process on the server socket is not a trusted session server.")
+                wedgedFailures += 1
             } catch {
                 // Typically ECONNREFUSED: no server yet. Bring one up once
                 // and give it a moment to bind before the next attempt.
@@ -309,6 +317,12 @@ final class ServerManager {
     private func requestServerRestartAfterMismatch() {
         Task.detached { [socketPath] in
             guard let connection = try? UnixSocketConnection.connect(to: socketPath) else {
+                return
+            }
+            // Same trust rule as the main client connection: only talk to
+            // a properly signed sessions-server.
+            guard connection.peerIsAuthorized(by: .trustedSessionsServer()) else {
+                connection.close()
                 return
             }
             connection.send(.control(.restartServer))

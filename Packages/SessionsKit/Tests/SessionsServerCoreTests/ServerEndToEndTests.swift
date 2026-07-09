@@ -28,7 +28,9 @@ struct ServerEndToEndTests {
     }
 
     private func connectClient(socket: String) async throws -> (SessionServerClient, ServerState) {
-        let client = SessionServerClient()
+        // The in-process ServerCore's peer is the test runner, not a
+        // signed sessions-server binary, so server verification is off.
+        let client = SessionServerClient(verifiesServerSignature: false)
         var lastError: (any Error)?
         for _ in 0..<50 {
             do {
@@ -372,5 +374,31 @@ struct ServerEndToEndTests {
         try await Task.sleep(for: .seconds(1))
         let busy = await client.checkBusy(sessionID: session.id)
         #expect(busy, "Shell running sleep should be busy")
+    }
+
+    /// A verifying client must refuse a listener that is not a signed
+    /// sessions-server binary. The in-process test server doubles as the
+    /// impostor: the peer process on its socket is the test runner.
+    @Test func clientRejectsUnsignedServerPeer() async throws {
+        let paths = makeTempPaths()
+        defer { try? FileManager.default.removeItem(atPath: paths.directory) }
+        let (core, task) = try startServer(socket: paths.socket, state: paths.state)
+        defer { task.cancel() }
+        let client = SessionServerClient()
+        var sawUntrustedServer = false
+        for _ in 0..<50 {
+            do {
+                _ = try await client.connect(socketPath: paths.socket, appVersion: "test")
+                break // Connected: verification failed to reject the peer.
+            } catch SessionServerClientError.untrustedServer {
+                sawUntrustedServer = true
+                break
+            } catch {
+                // Server not listening yet; retry.
+                try? await Task.sleep(for: .milliseconds(20))
+            }
+        }
+        #expect(sawUntrustedServer, "Client should reject a peer that is not a signed sessions-server")
+        _ = core
     }
 }
