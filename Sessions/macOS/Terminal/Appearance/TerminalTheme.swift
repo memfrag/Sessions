@@ -66,6 +66,12 @@ struct TerminalTheme: Identifiable, Hashable {
         container?.backgroundColor = terminalView.nativeBackgroundColor
     }
 
+    /// The effective terminal background color (the system theme uses the
+    /// native text-background color).
+    var effectiveBackgroundColor: NSColor {
+        NSColor(hexString: background) ?? .textBackgroundColor
+    }
+
     private static func swiftTermColors(from hexStrings: [String]) -> [SwiftTerm.Color] {
         hexStrings.compactMap { SwiftTerm.Color(hexString: $0) }
     }

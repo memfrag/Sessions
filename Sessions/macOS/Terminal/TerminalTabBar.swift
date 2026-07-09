@@ -10,9 +10,19 @@ struct TerminalTabBar: View {
 
     @Environment(WorkspacesModel.self) private var model
 
+    @Environment(AppSettings.self) private var settings
+
     let workspace: Workspace
 
     let selectedSessionID: SessionInfo.ID?
+
+    /// The active terminal background, so the selected tab merges into the
+    /// content below it.
+    private var terminalBackground: Color {
+        let theme = TerminalTheme.theme(withID: settings.terminalThemeID)
+            .applying(settings.terminalThemeOverrides[settings.terminalThemeID])
+        return Color(nsColor: theme.effectiveBackgroundColor)
+    }
 
     var body: some View {
         HStack(spacing: 0) {
@@ -22,7 +32,8 @@ struct TerminalTabBar: View {
                         TerminalTabItem(
                             workspace: workspace,
                             session: session,
-                            isSelected: session.id == selectedSessionID
+                            isSelected: session.id == selectedSessionID,
+                            terminalBackground: terminalBackground
                         )
                     }
                 }
@@ -39,7 +50,17 @@ struct TerminalTabBar: View {
             .padding(.horizontal, 4)
         }
         .frame(height: 32)
-        .background(.bar)
+        // The bar material plus a bottom hairline, both behind the tabs so
+        // the opaque selected tab paints over the line and merges with the
+        // content below.
+        .background(alignment: .bottom) {
+            ZStack(alignment: .bottom) {
+                Rectangle().fill(.bar)
+                Rectangle()
+                    .fill(Color.primary.opacity(0.12))
+                    .frame(height: 1)
+            }
+        }
     }
 }
 
@@ -54,6 +75,8 @@ private struct TerminalTabItem: View {
     let session: SessionInfo
 
     let isSelected: Bool
+
+    let terminalBackground: Color
 
     @State private var isHovering = false
 
@@ -187,7 +210,7 @@ private struct TerminalTabItem: View {
 
     @ViewBuilder private var tabBackground: some View {
         if isSelected {
-            Color(nsColor: .controlBackgroundColor)
+            terminalBackground
         } else if isHovering {
             Color.primary.opacity(0.06)
         } else {

@@ -20,7 +20,6 @@ struct WorkspacePane: View {
         let selectedSessionID = model.selectedSessionID(in: workspace)
         VStack(spacing: 0) {
             TerminalTabBar(workspace: workspace, selectedSessionID: selectedSessionID)
-            Divider()
             if workspace.sessions.isEmpty {
                 emptyState
             } else {
