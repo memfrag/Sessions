@@ -211,6 +211,24 @@ final class WorkspacesModel {
         return name.isEmpty ? directory : name
     }
 
+    /// Display title for a session — the same chain the tab bar uses:
+    /// custom title, shell title, cwd folder name, generic fallback.
+    func sessionTitle(for session: SessionInfo) -> String {
+        let controller = sessionRegistry.controllerIfExists(for: session.id)
+        return session.customTitle
+            ?? controller?.shellTitle
+            ?? controller?.currentDirectory.map { ($0 as NSString).lastPathComponent }
+            ?? "Terminal"
+    }
+
+    /// Sessions in the workspace that want the user's attention, for the
+    /// menu bar's jump list.
+    func attentionSessions(in workspace: Workspace) -> [SessionInfo] {
+        workspace.sessions.filter { session in
+            sessionRegistry.controllerIfExists(for: session.id)?.needsAttention ?? false
+        }
+    }
+
     /// Whether any session in the workspace wants the user's attention
     /// (bell or OSC 9 notification, e.g. Claude Code awaiting input).
     func workspaceNeedsAttention(_ workspace: Workspace) -> Bool {

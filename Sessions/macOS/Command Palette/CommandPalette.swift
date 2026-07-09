@@ -383,7 +383,7 @@ struct CommandPaletteView: View {
             workspace.sessions.map { session in
                 PaletteCommand(
                     id: "tab-\(session.id)",
-                    title: tabTitle(for: session.id, customTitle: session.customTitle),
+                    title: model.sessionTitle(for: session),
                     subtitle: "Go to Tab — \(workspace.name)",
                     systemImage: "terminal"
                 ) { [model] in
@@ -392,15 +392,6 @@ struct CommandPaletteView: View {
                 }
             }
         }
-    }
-
-    /// Same title chain as the tab bar: custom title, shell title, cwd folder.
-    private func tabTitle(for sessionID: UUID, customTitle: String?) -> String {
-        let controller = model.sessionRegistry.controllerIfExists(for: sessionID)
-        return customTitle
-            ?? controller?.shellTitle
-            ?? controller?.currentDirectory.map { ($0 as NSString).lastPathComponent }
-            ?? "Terminal"
     }
 
     private var themeCommands: [PaletteCommand] {

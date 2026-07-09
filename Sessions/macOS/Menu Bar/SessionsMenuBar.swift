@@ -128,26 +128,54 @@ private struct SessionsMenuBarView: View {
     }
 
     private func workspaceRow(_ workspace: Workspace) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Button {
+                model.selectedWorkspaceID = workspace.id
+                openMainWindow()
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "terminal")
+                        .foregroundStyle(.secondary)
+                    Text(workspace.name)
+                        .lineLimit(1)
+                    if model.workspaceNeedsAttention(workspace) {
+                        Image(systemName: "bell.fill")
+                            .font(.caption2)
+                            .foregroundStyle(.orange)
+                    }
+                    Spacer()
+                    let live = workspace.sessions.count { $0.isAlive }
+                    Text(live > 0 ? "\(live) live" : "\(workspace.sessions.count) tabs")
+                        .font(.caption)
+                        .foregroundStyle(live > 0 ? Color.green : Color.secondary)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            // Jump list: the specific tabs wanting attention.
+            ForEach(model.attentionSessions(in: workspace)) { session in
+                attentionSessionRow(session, in: workspace)
+            }
+        }
+    }
+
+    private func attentionSessionRow(_ session: SessionInfo, in workspace: Workspace) -> some View {
         Button {
             model.selectedWorkspaceID = workspace.id
+            // Clears the tab's attention state too.
+            model.selectSession(id: session.id, in: workspace.id)
             openMainWindow()
         } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "terminal")
-                    .foregroundStyle(.secondary)
-                Text(workspace.name)
+            HStack(spacing: 6) {
+                Image(systemName: "bell.fill")
+                    .font(.caption2)
+                    .foregroundStyle(.orange)
+                Text(model.sessionTitle(for: session))
+                    .font(.callout)
                     .lineLimit(1)
-                if model.workspaceNeedsAttention(workspace) {
-                    Image(systemName: "bell.fill")
-                        .font(.caption2)
-                        .foregroundStyle(.orange)
-                }
                 Spacer()
-                let live = workspace.sessions.count { $0.isAlive }
-                Text(live > 0 ? "\(live) live" : "\(workspace.sessions.count) tabs")
-                    .font(.caption)
-                    .foregroundStyle(live > 0 ? Color.green : Color.secondary)
             }
+            .padding(.leading, 24)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

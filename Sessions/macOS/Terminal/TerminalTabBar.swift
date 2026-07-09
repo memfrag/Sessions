@@ -92,10 +92,7 @@ private struct TerminalTabItem: View {
     }
 
     private var title: String {
-        session.customTitle
-            ?? controller.shellTitle
-            ?? controller.currentDirectory.map { ($0 as NSString).lastPathComponent }
-            ?? "Terminal"
+        model.sessionTitle(for: session)
     }
 
     private var directoryTooltip: String? {
