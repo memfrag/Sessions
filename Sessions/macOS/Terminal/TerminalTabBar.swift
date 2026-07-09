@@ -15,9 +15,9 @@ struct TerminalTabBar: View {
     let selectedSessionID: SessionInfo.ID?
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 0) {
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 4) {
+                HStack(spacing: 0) {
                     ForEach(workspace.sessions) { session in
                         TerminalTabItem(
                             workspace: workspace,
@@ -26,20 +26,19 @@ struct TerminalTabBar: View {
                         )
                     }
                 }
-                .padding(.horizontal, 8)
             }
             Button {
                 model.createSession(in: workspace.id)
             } label: {
                 Image(systemName: "plus")
-                    .frame(width: 24, height: 24)
+                    .frame(width: 28, height: 28)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .help("New Tab")
-            .padding(.trailing, 8)
+            .padding(.horizontal, 4)
         }
-        .frame(height: 34)
+        .frame(height: 32)
         .background(.bar)
     }
 }
@@ -130,12 +129,27 @@ private struct TerminalTabItem: View {
             .help("Close Tab")
             .opacity(isHovering || isSelected ? 1 : 0)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 5)
-        .background(
-            RoundedRectangle(cornerRadius: 6)
-                .fill(isSelected ? Color.primary.opacity(0.15) : Color.clear)
-        )
+        .font(.callout)
+        .foregroundStyle(isSelected ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
+        .padding(.horizontal, 12)
+        .frame(maxHeight: .infinity)
+        .frame(minWidth: 90, idealWidth: 160, maxWidth: 220)
+        .background(tabBackground)
+        .overlay(alignment: .top) {
+            // Active-tab accent stripe.
+            Rectangle()
+                .fill(Color.accentColor)
+                .frame(height: 2)
+                .opacity(isSelected ? 1 : 0)
+        }
+        .overlay(alignment: .trailing) {
+            // Thin separator between tabs (hidden next to the active tab).
+            Rectangle()
+                .fill(Color.primary.opacity(0.08))
+                .frame(width: 1)
+                .padding(.vertical, 6)
+                .opacity(isSelected ? 0 : 1)
+        }
         .contentShape(Rectangle())
         .onHover { hovering in
             isHovering = hovering
@@ -168,6 +182,16 @@ private struct TerminalTabItem: View {
             }
             model.moveSession(id: draggedID, toIndex: targetIndex)
             return true
+        }
+    }
+
+    @ViewBuilder private var tabBackground: some View {
+        if isSelected {
+            Color(nsColor: .controlBackgroundColor)
+        } else if isHovering {
+            Color.primary.opacity(0.06)
+        } else {
+            Color.clear
         }
     }
 
