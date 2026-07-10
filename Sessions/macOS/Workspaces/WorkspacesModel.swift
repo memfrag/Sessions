@@ -78,9 +78,15 @@ final class WorkspacesModel {
 
     private func apply(_ state: ServerState) {
         let previousSessionIDs = Set(workspaces.flatMap { $0.sessions.map(\.id) })
+        let previousWorkspaceIDs = Set(workspaces.map(\.id))
         workspaces = state.workspaces
-        // Keep a valid workspace selection.
-        if selectedWorkspaceID == nil || !workspaces.contains(where: { $0.id == selectedWorkspaceID }) {
+        // Switch to a just-created workspace — but not on the initial load
+        // (when everything is "new"), where the default selection applies.
+        if !previousWorkspaceIDs.isEmpty,
+           let newWorkspace = workspaces.last(where: { !previousWorkspaceIDs.contains($0.id) }) {
+            selectedWorkspaceID = newWorkspace.id
+        } else if selectedWorkspaceID == nil || !workspaces.contains(where: { $0.id == selectedWorkspaceID }) {
+            // Keep a valid workspace selection.
             selectedWorkspaceID = workspaces.first?.id
         }
         // Select newly created tabs in their workspace.
