@@ -40,33 +40,6 @@ struct PaletteCommand: Identifiable {
         self.action = action
     }
 
-    /// Subsequence fuzzy match score; nil when the query does not match.
-    /// Bonuses for prefix, word-boundary, and consecutive matches keep
-    /// "nt" ranking "New Tab" above "Find in Terminal".
-    static func fuzzyScore(query: String, in candidate: String) -> Int? {
-        if query.isEmpty { return 0 }
-        let query = Array(query.lowercased())
-        let candidate = Array(candidate.lowercased())
-        var score = 0
-        var queryIndex = 0
-        var previousMatchIndex: Int?
-        for (index, character) in candidate.enumerated() where queryIndex < query.count {
-            guard character == query[queryIndex] else { continue }
-            var characterScore = 1
-            if index == 0 {
-                characterScore += 3
-            } else if !candidate[index - 1].isLetter && !candidate[index - 1].isNumber {
-                characterScore += 2
-            }
-            if let previous = previousMatchIndex, index == previous + 1 {
-                characterScore += 2
-            }
-            score += characterScore
-            previousMatchIndex = index
-            queryIndex += 1
-        }
-        return queryIndex == query.count ? score : nil
-    }
 }
 
 // MARK: - Overlay
@@ -242,11 +215,11 @@ struct CommandPaletteView: View {
         }
         return commands
             .compactMap { command -> (command: PaletteCommand, score: Int)? in
-                let titleScore = PaletteCommand.fuzzyScore(query: trimmed, in: command.title)
+                let titleScore = FuzzyMatch.score(query: trimmed, in: command.title)
                 // Subtitles match too ("dracula" under "Theme"), discounted
                 // so title matches always rank first.
                 let subtitleScore = command.subtitle
-                    .flatMap { PaletteCommand.fuzzyScore(query: trimmed, in: $0) }
+                    .flatMap { FuzzyMatch.score(query: trimmed, in: $0) }
                     .map { $0 - 10 }
                 guard let score = [titleScore, subtitleScore].compactMap({ $0 }).max() else {
                     return nil

@@ -15,12 +15,37 @@ struct Sidebar: View {
 
     @State private var renameText = ""
 
+    @State private var filterText = ""
+
+    /// Workspaces matching the footer filter: fuzzy match against the
+    /// workspace name, its tab titles, and its tabs' current directory
+    /// folder names. Sidebar order is preserved (filter, not ranking).
+    private var filteredWorkspaces: [Workspace] {
+        let trimmed = filterText.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return model.workspaces }
+        return model.workspaces.filter { workspace in
+            if FuzzyMatch.matches(query: trimmed, in: workspace.name) {
+                return true
+            }
+            return workspace.sessions.contains { session in
+                if FuzzyMatch.matches(query: trimmed, in: model.sessionTitle(for: session)) {
+                    return true
+                }
+                guard let directory = model.sessionRegistry
+                    .controllerIfExists(for: session.id)?.currentDirectory else {
+                    return false
+                }
+                return FuzzyMatch.matches(query: trimmed, in: (directory as NSString).lastPathComponent)
+            }
+        }
+    }
+
     var body: some View {
         @Bindable var model = model
         NavigationSplitView {
             List(selection: $model.selectedWorkspaceID) {
                 Section(header: Text("Workspaces")) {
-                    ForEach(model.workspaces) { workspace in
+                    ForEach(filteredWorkspaces) { workspace in
                         WorkspaceSidebarItem(workspace: workspace) { workspace in
                             renameText = workspace.name
                             workspaceToRename = workspace
@@ -36,7 +61,7 @@ struct Sidebar: View {
             .listStyle(SidebarListStyle())
             .frame(minWidth: 180, idealWidth: 200, maxWidth: 300)
             .safeAreaInset(edge: .bottom, spacing: 0) {
-                SidebarFooter {
+                SidebarFooter(filterText: $filterText) {
                     model.isNewWorkspaceSheetPresented = true
                 }
             }
@@ -110,6 +135,9 @@ struct Sidebar: View {
     }
 
     private func moveWorkspaces(from source: IndexSet, to destination: Int) {
+        // Row indices refer to the filtered list; reordering a filtered
+        // subset is ill-defined, so it is disabled while filtering.
+        guard filterText.trimmingCharacters(in: .whitespaces).isEmpty else { return }
         guard let sourceIndex = source.first,
               model.workspaces.indices.contains(sourceIndex) else { return }
         let workspace = model.workspaces[sourceIndex]
