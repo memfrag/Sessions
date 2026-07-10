@@ -52,6 +52,7 @@ struct Sidebar: View {
                 CommandPaletteOverlay()
             }
         }
+        .navigationTitle(model.selectedWorkspace?.name ?? "Sessions")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 SnippetsToolbarMenu()
