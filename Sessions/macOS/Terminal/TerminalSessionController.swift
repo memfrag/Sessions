@@ -230,6 +230,15 @@ final class TerminalSessionController {
         }
     }
 
+    /// Forces a full repaint of the terminal from its buffer. SwiftTerm
+    /// only invalidates rows that changed and never redraws on becoming
+    /// visible, so a tab whose opacity-0 layer backing store was dropped
+    /// while hidden can return blank. Called when a tab becomes selected.
+    func forceRedraw() {
+        terminalView.getTerminal().updateFullScreen()
+        terminalView.setNeedsDisplay(terminalView.bounds)
+    }
+
     /// Empty name means the system monospaced font (SF Mono). Otherwise
     /// `name` is a font family; falls back to the system monospaced font
     /// if the family is no longer installed.

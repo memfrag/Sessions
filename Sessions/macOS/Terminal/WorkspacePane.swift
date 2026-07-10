@@ -7,9 +7,12 @@ import SwiftUI
 
 /// Detail pane for a workspace: tab bar on top, terminals below.
 ///
-/// All of the workspace's terminals stay in the view hierarchy (hidden via
-/// opacity) so switching tabs never tears down a terminal view or its
-/// server attachment.
+/// Every tab's terminal view stays mounted and correctly sized, so
+/// switching never remounts or reflows a terminal. The selected tab is
+/// brought to the front with `zIndex` while every tab keeps full opacity
+/// — hiding via `opacity(0)` let AppKit drop a hidden view's layer
+/// backing store, which came back blank on reselect. The opaque selected
+/// terminal simply covers the others.
 struct WorkspacePane: View {
 
     @Environment(WorkspacesModel.self) private var model
@@ -25,12 +28,10 @@ struct WorkspacePane: View {
             } else {
                 ZStack {
                     ForEach(workspace.sessions) { session in
-                        TerminalSessionPage(
-                            session: session,
-                            isSelected: session.id == selectedSessionID
-                        )
-                        .opacity(session.id == selectedSessionID ? 1 : 0)
-                        .allowsHitTesting(session.id == selectedSessionID)
+                        let isSelected = session.id == selectedSessionID
+                        TerminalSessionPage(session: session, isSelected: isSelected)
+                            .zIndex(isSelected ? 1 : 0)
+                            .allowsHitTesting(isSelected)
                     }
                 }
             }
@@ -82,13 +83,16 @@ private struct TerminalSessionPage: View {
                     exitedOverlay
                 }
             }
-            .onAppear {
-                restartIfDormant()
-            }
             .onChange(of: isSelected) { _, selected in
                 if selected {
                     restartIfDormant()
+                    // Belt and suspenders: repaint from the buffer in case
+                    // this tab was occluded when new output arrived.
+                    controller.forceRedraw()
                 }
+            }
+            .onAppear {
+                restartIfDormant()
             }
     }
 
