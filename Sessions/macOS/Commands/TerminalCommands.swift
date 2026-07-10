@@ -24,7 +24,7 @@ struct TerminalCommands: Commands {
 
         CommandGroup(replacing: .newItem) {
             Button("New Workspace…") {
-                model?.isNewWorkspaceSheetPresented = true
+                model?.beginNewWorkspace()
             }
             .keyboardShortcut("n", modifiers: [.command, .shift])
             .disabled(model == nil)

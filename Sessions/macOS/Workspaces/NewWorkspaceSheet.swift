@@ -11,7 +11,7 @@ struct NewWorkspaceSheet: View {
 
     @Environment(\.dismiss) private var dismiss
 
-    @State private var name = ""
+    @State private var name: String
 
     @State private var rootURL: URL?
 
@@ -20,6 +20,13 @@ struct NewWorkspaceSheet: View {
     @State private var colorID: String?
 
     @State private var isFolderPickerPresented = false
+
+    /// - Parameter initialFolder: pre-selects this directory and seeds the
+    ///   name from its last path component (used for folder drops).
+    init(initialFolder: URL? = nil) {
+        _rootURL = State(initialValue: initialFolder)
+        _name = State(initialValue: initialFolder?.lastPathComponent ?? "")
+    }
 
     private var isValid: Bool {
         !name.trimmingCharacters(in: .whitespaces).isEmpty && rootURL != nil

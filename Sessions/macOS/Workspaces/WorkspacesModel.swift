@@ -23,6 +23,10 @@ final class WorkspacesModel {
 
     var isNewWorkspaceSheetPresented = false
 
+    /// Folder used to pre-populate the New Workspace sheet (set when a
+    /// folder is dropped on the sidebar); nil for a blank new workspace.
+    var newWorkspaceInitialFolder: URL?
+
     /// Whether the command palette overlay is shown. The terminal focus
     /// grab in `TerminalSessionView` yields while this is true.
     var isCommandPaletteVisible = false
@@ -310,6 +314,14 @@ final class WorkspacesModel {
     }
 
     // MARK: - Menu command actions (operate on the current selection)
+
+    /// Opens the New Workspace sheet, optionally pre-populated with a
+    /// dropped folder. Clears any previous drop so the blank entry points
+    /// (footer, menu, palette) start empty.
+    func beginNewWorkspace(folder: URL? = nil) {
+        newWorkspaceInitialFolder = folder
+        isNewWorkspaceSheetPresented = true
+    }
 
     func newTabInSelectedWorkspace() {
         guard let workspace = selectedWorkspace else { return }

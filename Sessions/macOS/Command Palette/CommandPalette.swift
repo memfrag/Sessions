@@ -235,7 +235,7 @@ struct CommandPaletteView: View {
             systemImage: "folder.badge.plus",
             shortcutHint: "⇧⌘N"
         ) { [model] in
-            model.isNewWorkspaceSheetPresented = true
+            model.beginNewWorkspace()
         })
         if model.selectedTerminalController != nil {
             commands.append(PaletteCommand(

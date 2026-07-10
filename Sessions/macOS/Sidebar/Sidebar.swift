@@ -61,7 +61,7 @@ struct Sidebar: View {
         }
         .focusedSceneValue(\.workspacesModel, model)
         .sheet(isPresented: $model.isNewWorkspaceSheetPresented) {
-            NewWorkspaceSheet()
+            NewWorkspaceSheet(initialFolder: model.newWorkspaceInitialFolder)
         }
         .sheet(item: $workspaceToEdit) { workspace in
             EditWorkspaceSheet(workspace: workspace)
@@ -138,8 +138,16 @@ struct Sidebar: View {
         .frame(minWidth: 180, idealWidth: 200, maxWidth: 300)
         .safeAreaInset(edge: .bottom, spacing: 0) {
             SidebarFooter(filterText: $filterText) {
-                model.isNewWorkspaceSheetPresented = true
+                model.beginNewWorkspace()
             }
+        }
+        // Dropping a folder from Finder creates a workspace pre-populated
+        // with that folder. (Tab rows accept String drops for moves; the
+        // payload types don't collide.)
+        .dropDestination(for: URL.self) { urls, _ in
+            guard let folder = urls.first(where: \.hasDirectoryPath) else { return false }
+            model.beginNewWorkspace(folder: folder)
+            return true
         }
     }
 
