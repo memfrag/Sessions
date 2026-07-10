@@ -3,11 +3,10 @@
 //
 
 import AppKit
-import SwiftTerm
 import SwiftUI
 
-/// Hosts the controller-owned SwiftTerm terminal view in SwiftUI, inset by
-/// a small margin inside a background-matching container.
+/// Hosts the controller-owned terminal view in SwiftUI, inset by a small
+/// margin inside a background-matching container.
 struct TerminalSessionView: NSViewRepresentable {
 
     @Environment(AppSettings.self) private var settings
@@ -22,7 +21,7 @@ struct TerminalSessionView: NSViewRepresentable {
 
     func makeNSView(context: Context) -> TerminalContainerView {
         let container = TerminalContainerView()
-        let terminalView = controller.terminalView
+        let terminalView = controller.emulator.view
         container.addSubview(terminalView)
         container.hostedView = terminalView
         applyAppearance(container: container)
@@ -32,7 +31,7 @@ struct TerminalSessionView: NSViewRepresentable {
     func updateNSView(_ nsView: TerminalContainerView, context: Context) {
         // The controller keeps one terminal view for the session's lifetime;
         // if SwiftUI hands this representable a recycled container, re-home it.
-        let terminalView = controller.terminalView
+        let terminalView = controller.emulator.view
         if terminalView.superview !== nsView {
             terminalView.removeFromSuperview()
             nsView.addSubview(terminalView)
@@ -50,9 +49,9 @@ struct TerminalSessionView: NSViewRepresentable {
                   !model.isCommandPaletteVisible,
                   let window = terminalView.window,
                   // Only claim focus in the key window. Grabbing focus in a
-                  // background window makes SwiftTerm fire a focus-in event
-                  // (mode 1004) that reaches the shell — which a TUI prompt
-                  // (e.g. Claude Code's question) can read as a keystroke.
+                  // background window makes the terminal fire a focus-in
+                  // event (mode 1004) that reaches the shell — which a TUI
+                  // prompt (e.g. Claude Code's question) can read as a key.
                   window.isKeyWindow,
                   window.firstResponder !== terminalView else { return }
             window.makeFirstResponder(terminalView)
@@ -62,32 +61,29 @@ struct TerminalSessionView: NSViewRepresentable {
     private func applyAppearance(container: TerminalContainerView) {
         let theme = TerminalTheme.theme(withID: settings.terminalThemeID, custom: settings.customTerminalThemes)
             .applying(settings.terminalThemeOverrides[settings.terminalThemeID])
-        controller.applyAppearanceIfNeeded(
-            theme: theme,
-            fontName: settings.terminalFontName,
-            fontSize: CGFloat(settings.terminalFontSize),
-            container: container
-        )
-        controller.applyRendererIfNeeded(useMetal: settings.useMetalRenderer)
-        controller.applyInputBehavior(
-            optionAsMetaKey: settings.optionAsMetaKey,
-            confirmMultilinePaste: settings.confirmMultilinePaste
-        )
-        controller.applyTerminalOptions(
+        let appearance = TerminalAppearance(
+            isSystemTheme: theme.isSystem,
+            ansi: theme.ansi,
+            foreground: theme.foreground,
+            background: theme.background,
+            cursor: theme.cursor,
+            selection: theme.selection,
+            font: TerminalAppearance.font(
+                name: settings.terminalFontName,
+                size: CGFloat(settings.terminalFontSize)
+            ),
+            cursorShape: TerminalCursorShape(rawValue: settings.terminalCursorShape) ?? .block,
+            cursorBlinks: settings.terminalCursorBlinks,
             scrollbackLines: settings.terminalScrollbackLines,
             tabStopWidth: settings.terminalTabStopWidth,
-            cursorStyle: Self.cursorStyle(
-                shape: settings.terminalCursorShape,
-                blinks: settings.terminalCursorBlinks
-            )
+            optionAsMeta: settings.optionAsMetaKey,
+            confirmMultilinePaste: settings.confirmMultilinePaste,
+            useMetal: settings.useMetalRenderer
         )
-    }
-
-    private static func cursorStyle(shape: String, blinks: Bool) -> CursorStyle {
-        switch shape {
-        case "underline": blinks ? .blinkUnderline : .steadyUnderline
-        case "bar": blinks ? .blinkBar : .steadyBar
-        default: blinks ? .blinkBlock : .steadyBlock
+        controller.applyAppearance(appearance)
+        // Keep the margin container's background matching the terminal.
+        if container.backgroundColor != controller.emulator.backgroundColor {
+            container.backgroundColor = controller.emulator.backgroundColor
         }
     }
 }

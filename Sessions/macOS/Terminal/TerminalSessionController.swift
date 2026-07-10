@@ -8,7 +8,6 @@ import Observation
 import OSLog
 import SessionsClient
 import SessionsProtocol
-import SwiftTerm
 
 /// Owns the terminal view for one session (tab) and its attachment to the
 /// session server.
@@ -24,7 +23,9 @@ final class TerminalSessionController {
 
     let sessionID: SessionInfo.ID
 
-    let terminalView: SessionsTerminalView
+    /// The terminal engine + rendered view (SwiftTerm today, behind the
+    /// `TerminalEmulator` seam).
+    let emulator: TerminalEmulator
 
     private let client: SessionServerClient
 
@@ -121,112 +122,30 @@ final class TerminalSessionController {
     func hideFindBar() {
         isFindBarVisible = false
         findFailed = false
-        terminalView.clearSearch()
-        terminalView.window?.makeFirstResponder(terminalView)
+        emulator.clearSearch()
+        emulator.focus()
     }
 
     func findNext() {
         guard !findText.isEmpty else { return }
-        let options = SearchOptions(caseSensitive: findCaseSensitive, regex: findRegex)
-        findFailed = !terminalView.findNext(findText, options: options, scrollToResult: true)
+        findFailed = !emulator.find(findText, forward: true, caseSensitive: findCaseSensitive, regex: findRegex)
     }
 
     func findPrevious() {
         guard !findText.isEmpty else { return }
-        let options = SearchOptions(caseSensitive: findCaseSensitive, regex: findRegex)
-        findFailed = !terminalView.findPrevious(findText, options: options, scrollToResult: true)
+        findFailed = !emulator.find(findText, forward: false, caseSensitive: findCaseSensitive, regex: findRegex)
     }
 
     // MARK: - Appearance
 
-    private var appliedTheme: TerminalTheme?
-
-    private var metalApplyFailedForSetting: Bool?
-
-    /// Applies input behavior settings (cheap; assignment-only).
-    func applyInputBehavior(optionAsMetaKey: Bool, confirmMultilinePaste: Bool) {
-        terminalView.confirmsMultilinePaste = confirmMultilinePaste
-        if terminalView.optionAsMetaKey != optionAsMetaKey {
-            terminalView.optionAsMetaKey = optionAsMetaKey
-        }
-    }
-
-    private var appliedCursorStyle: CursorStyle?
-
-    private var appliedScrollbackLines: Int?
-
-    private var appliedTabStopWidth: Int?
-
-    /// Applies terminal-engine options. Cursor style is a live change;
-    /// scrollback and tab stop width require rebuilding the terminal's
-    /// buffers (`Terminal.setup`), which clears the screen — the follow-up
-    /// re-attach replays the content from the server's ring buffer.
-    func applyTerminalOptions(scrollbackLines: Int, tabStopWidth: Int, cursorStyle: CursorStyle) {
-        let terminal = terminalView.getTerminal()
-        if appliedCursorStyle != cursorStyle {
-            appliedCursorStyle = cursorStyle
-            terminal.setCursorStyle(cursorStyle)
-        }
-        let isFirstApplication = appliedScrollbackLines == nil
-        let needsRebuild = !isFirstApplication
-            && (appliedScrollbackLines != scrollbackLines || appliedTabStopWidth != tabStopWidth)
-        appliedScrollbackLines = scrollbackLines
-        appliedTabStopWidth = tabStopWidth
-        guard isFirstApplication || needsRebuild else { return }
-        var options = terminal.options
-        options.scrollback = scrollbackLines
-        options.tabStopWidth = tabStopWidth
-        // Keep the terminal's current size; setup() rebuilds from options.
-        options.cols = terminal.cols
-        options.rows = terminal.rows
-        options.cursorStyle = cursorStyle
-        terminal.options = options
-        if needsRebuild {
-            terminal.setup(isReset: false)
+    /// Applies appearance/behavior settings to the emulator. Called from
+    /// every `updateNSView` pass — including for hidden tabs — so the
+    /// emulator guards each sub-change to stay cheap when nothing changed.
+    /// A scrollback/tab-stop change rebuilds the buffers and requires a
+    /// re-attach so the server replays the content back.
+    func applyAppearance(_ appearance: TerminalAppearance) {
+        if emulator.apply(appearance) {
             attach()
-        } else {
-            // First application happens right after view creation, before
-            // any content: rebuild silently, no replay needed beyond the
-            // attach that follows anyway.
-            terminal.setup(isReset: false)
-        }
-    }
-
-    /// Applies theme, font, and margin background. Called from every
-    /// `updateNSView` pass — including for hidden tabs in the ZStack — so
-    /// everything is guarded to be cheap when nothing changed.
-    func applyAppearanceIfNeeded(
-        theme: TerminalTheme,
-        fontName: String,
-        fontSize: CGFloat,
-        container: TerminalContainerView?
-    ) {
-        let resolvedFont = Self.resolveFont(name: fontName, size: fontSize)
-        if terminalView.font != resolvedFont {
-            terminalView.font = resolvedFont
-        }
-        if appliedTheme != theme {
-            appliedTheme = theme
-            theme.apply(to: terminalView, container: container)
-        } else if let container, container.backgroundColor != terminalView.nativeBackgroundColor {
-            container.backgroundColor = terminalView.nativeBackgroundColor
-        }
-    }
-
-    /// Toggles the experimental Metal renderer. On failure, logs once and
-    /// does not retry until the setting changes.
-    func applyRendererIfNeeded(useMetal: Bool) {
-        guard terminalView.window != nil,
-              terminalView.isUsingMetalRenderer != useMetal,
-              metalApplyFailedForSetting != useMetal else {
-            return
-        }
-        do {
-            try terminalView.setUseMetal(useMetal)
-            metalApplyFailedForSetting = nil
-        } catch {
-            metalApplyFailedForSetting = useMetal
-            Self.logger.error("Failed to toggle Metal renderer to \(useMetal): \(error)")
         }
     }
 
@@ -236,8 +155,7 @@ final class TerminalSessionController {
     /// the shell repaints its prompt on a clean screen.
     func clearScrollback() {
         guard !isReplaying else { return }
-        // ESC[3J erases the scrollback in the local view.
-        terminalView.feed(byteArray: ArraySlice(Array("\u{1B}[3J".utf8)))
+        emulator.eraseScrollback()
         let sessionID = self.sessionID
         let client = self.client
         let attachment = self.attachment
@@ -260,43 +178,19 @@ final class TerminalSessionController {
         attachment?.sendInput(Array(text.utf8))
     }
 
-    /// Forces a full repaint of the terminal from its buffer. SwiftTerm
-    /// only invalidates rows that changed and never redraws on becoming
-    /// visible, so a tab whose opacity-0 layer backing store was dropped
-    /// while hidden can return blank. Called when a tab becomes selected.
+    /// Forces a full repaint of the terminal from its buffer. The engine
+    /// only invalidates rows that changed and won't redraw on becoming
+    /// visible, so a tab whose backing store was dropped while hidden can
+    /// return blank. Called when a tab becomes selected.
     func forceRedraw() {
-        terminalView.getTerminal().updateFullScreen()
-        terminalView.setNeedsDisplay(terminalView.bounds)
-    }
-
-    /// Empty name means the system monospaced font (SF Mono). Otherwise
-    /// `name` is a font family; falls back to the system monospaced font
-    /// if the family is no longer installed.
-    private static func resolveFont(name: String, size: CGFloat) -> NSFont {
-        if !name.isEmpty {
-            if let font = NSFontManager.shared.font(withFamily: name, traits: [], weight: 5, size: size) {
-                return font
-            }
-            if let font = NSFont(name: name, size: size) {
-                return font
-            }
-        }
-        return NSFont.monospacedSystemFont(ofSize: size, weight: .regular)
+        emulator.redraw()
     }
 
     init(sessionID: SessionInfo.ID, client: SessionServerClient) {
         self.sessionID = sessionID
         self.client = client
-        terminalView = SessionsTerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
-        terminalView.terminalDelegate = self
-        // OSC 9 (iTerm2/kitty notification convention): used by tools like
-        // Claude Code hooks to signal "needs attention". The handler fires
-        // synchronously during feed() on the main actor.
-        terminalView.getTerminal().registerOscHandler(code: 9) { [weak self] payload in
-            MainActor.assumeIsolated {
-                self?.noteNotification(message: String(bytes: payload, encoding: .utf8))
-            }
-        }
+        emulator = SwiftTermEmulator()
+        emulator.delegate = self
     }
 
     private func noteNotification(message: String?) {
@@ -342,14 +236,13 @@ final class TerminalSessionController {
     func attach() {
         pumpTask?.cancel()
         pumpTask = Task {
-            // RIS: full terminal reset before the replay arrives.
-            terminalView.feed(byteArray: ArraySlice([0x1B, 0x63]))
-            let terminal = terminalView.getTerminal()
+            // Full terminal reset before the replay arrives.
+            emulator.reset()
             let attachment: SessionAttachment?
             attachment = try? await client.attach(
                 sessionID: sessionID,
-                cols: terminal.cols,
-                rows: terminal.rows
+                cols: emulator.cols,
+                rows: emulator.rows
             )
             guard let attachment else {
                 Self.logger.error("Failed to attach session \(self.sessionID)")
@@ -361,7 +254,7 @@ final class TerminalSessionController {
                 case .replayStarted:
                     isReplaying = true
                 case .output(let chunk):
-                    terminalView.feed(byteArray: chunk[...])
+                    emulator.feed(chunk[...])
                 case .replayDone:
                     isReplaying = false
                     reportCwdIfChanged()
@@ -403,27 +296,27 @@ final class TerminalSessionController {
     }
 }
 
-extension TerminalSessionController: @preconcurrency TerminalViewDelegate {
+extension TerminalSessionController: TerminalEmulatorDelegate {
 
-    func send(source: TerminalView, data: ArraySlice<UInt8>) {
+    func emulatorSend(_ bytes: ArraySlice<UInt8>) {
         guard !isReplaying else { return }
         // The user is interacting with this tab; attention is served and
         // any Claude status badge (incl. working/done) is stale.
         if needsAttention || claudeStatus != .none {
             clearAttention()
         }
-        attachment?.sendInput(Array(data))
+        attachment?.sendInput(Array(bytes))
     }
 
-    func sizeChanged(source: TerminalView, newCols: Int, newRows: Int) {
-        attachment?.resize(cols: newCols, rows: newRows)
+    func emulatorResized(cols: Int, rows: Int) {
+        attachment?.resize(cols: cols, rows: rows)
     }
 
-    func setTerminalTitle(source: TerminalView, title: String) {
+    func emulatorTitle(_ title: String) {
         shellTitle = title.isEmpty ? nil : title
     }
 
-    func hostCurrentDirectoryUpdate(source: TerminalView, directory: String?) {
+    func emulatorCwd(_ directory: String?) {
         guard let directory, let path = Self.parseOSC7Path(directory) else { return }
         currentDirectory = path
         // During replay, historical OSC 7 sequences fire this repeatedly;
@@ -432,6 +325,10 @@ extension TerminalSessionController: @preconcurrency TerminalViewDelegate {
         if !isReplaying {
             reportCwdIfChanged()
         }
+    }
+
+    func emulatorNotification(_ payload: String?) {
+        noteNotification(message: payload)
     }
 
     private func reportCwdIfChanged() {
@@ -455,36 +352,24 @@ extension TerminalSessionController: @preconcurrency TerminalViewDelegate {
         return path.isEmpty ? nil : path
     }
 
-    func scrolled(source: TerminalView, position: Double) {
-        // Not used.
-    }
-
-    func requestOpenLink(source: TerminalView, link: String, params: [String: String]) {
+    func emulatorOpenLink(_ link: String) {
         if let url = URL(string: link) {
             NSWorkspace.shared.open(url)
         }
     }
 
-    func bell(source: TerminalView) {
+    func emulatorBell() {
         // Historical BELs still in the scrollback re-fire during replay
         // (badging a tab on every app start); only live bells count.
         guard !isReplaying else { return }
         hasBell = true
     }
 
-    func clipboardCopy(source: TerminalView, content: Data) {
+    func emulatorCopy(_ content: Data) {
         if let string = String(bytes: content, encoding: .utf8) {
             let pasteboard = NSPasteboard.general
             pasteboard.clearContents()
             pasteboard.setString(string, forType: .string)
         }
-    }
-
-    func iTermContent(source: TerminalView, content: ArraySlice<UInt8>) {
-        // Not used.
-    }
-
-    func rangeChanged(source: TerminalView, startY: Int, endY: Int) {
-        // Not used.
     }
 }

@@ -3,7 +3,6 @@
 //
 
 import AppKit
-import SwiftTerm
 
 /// A terminal color theme: 16 ANSI colors plus default foreground,
 /// background, cursor, and selection colors, all as "#RRGGBB" hex strings.
@@ -32,48 +31,10 @@ struct TerminalTheme: Identifiable, Hashable, Codable {
 
     var isSystem: Bool { id == Self.systemThemeID }
 
-    /// Applies the theme to a terminal view and syncs the margin
-    /// container's background to the terminal background.
-    ///
-    /// The system theme starts from macOS-native colors; any non-empty
-    /// hex fields (user overrides) then win over the defaults. Custom
-    /// themes always carry non-empty fields, so both share one code path.
-    @MainActor
-    func apply(to terminalView: TerminalView, container: TerminalContainerView?) {
-        if isSystem {
-            terminalView.configureNativeColors()
-            terminalView.caretColor = .textColor
-            terminalView.caretTextColor = nil
-            terminalView.selectedTextBackgroundColor = .selectedTextBackgroundColor
-        }
-        let colors = Self.swiftTermColors(from: ansi.isEmpty ? Self.xterm16 : ansi)
-        if colors.count == 16 {
-            terminalView.installColors(colors)
-        }
-        if let color = NSColor(hexString: foreground) {
-            terminalView.nativeForegroundColor = color
-        }
-        if let color = NSColor(hexString: background) {
-            terminalView.nativeBackgroundColor = color
-            terminalView.caretTextColor = color
-        }
-        if let color = NSColor(hexString: cursor) {
-            terminalView.caretColor = color
-        }
-        if let color = NSColor(hexString: selection) {
-            terminalView.selectedTextBackgroundColor = color
-        }
-        container?.backgroundColor = terminalView.nativeBackgroundColor
-    }
-
     /// The effective terminal background color (the system theme uses the
     /// native text-background color).
     var effectiveBackgroundColor: NSColor {
         NSColor(hexString: background) ?? .textBackgroundColor
-    }
-
-    private static func swiftTermColors(from hexStrings: [String]) -> [SwiftTerm.Color] {
-        hexStrings.compactMap { SwiftTerm.Color(hexString: $0) }
     }
 
     /// The standard xterm 16-color palette, used by the system theme.
@@ -101,20 +62,9 @@ extension NSColor {
     }
 }
 
-extension SwiftTerm.Color {
-
-    /// Parses "#RRGGBB" into SwiftTerm's 16-bit-per-channel color.
-    convenience init?(hexString: String) {
-        guard let (red, green, blue) = parseHexRGB(hexString) else { return nil }
-        self.init(
-            red: UInt16(red) * 257,
-            green: UInt16(green) * 257,
-            blue: UInt16(blue) * 257
-        )
-    }
-}
-
-private func parseHexRGB(_ hexString: String) -> (UInt8, UInt8, UInt8)? {
+/// Parses "#RRGGBB" (leading "#" optional) into 8-bit RGB. Shared by the
+/// `NSColor` and engine color parsers.
+func parseHexRGB(_ hexString: String) -> (UInt8, UInt8, UInt8)? {
     var hex = hexString
     if hex.hasPrefix("#") {
         hex.removeFirst()
