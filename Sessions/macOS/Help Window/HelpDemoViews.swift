@@ -70,26 +70,31 @@ struct HelpClaudeStatusLegend: View {
 /// snippet editor.
 struct HelpSnippetDemo: View {
     var body: some View {
-        (
-            Text("ssh ")
-            + token("{{user}}")
-            + Text("@")
-            + token("{{host:localhost}}")
-            + Text(" -p ")
-            + token("{{port:22}}")
-        )
-        .font(.body.monospaced())
-        .padding(10)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 6)
-                .fill(Color.primary.opacity(0.05))
-        )
-        .padding(.vertical, 4)
+        Text(styled)
+            .font(.body.monospaced())
+            .padding(10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color.primary.opacity(0.05))
+            )
+            .padding(.vertical, 4)
     }
 
-    private func token(_ text: String) -> Text {
-        Text(text).foregroundColor(.accentColor)
+    private var styled: AttributedString {
+        var result = AttributedString("ssh ")
+        result += token("{{user}}")
+        result += AttributedString("@")
+        result += token("{{host:localhost}}")
+        result += AttributedString(" -p ")
+        result += token("{{port:22}}")
+        return result
+    }
+
+    private func token(_ text: String) -> AttributedString {
+        var token = AttributedString(text)
+        token.foregroundColor = .accentColor
+        return token
     }
 }
 
