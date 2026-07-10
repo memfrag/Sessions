@@ -52,12 +52,23 @@ struct Sidebar: View {
                 CommandPaletteOverlay()
             }
         }
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                SnippetsToolbarMenu()
+            }
+            .sharedBackgroundVisibility(.hidden)
+        }
         .focusedSceneValue(\.workspacesModel, model)
         .sheet(isPresented: $model.isNewWorkspaceSheetPresented) {
             NewWorkspaceSheet()
         }
         .sheet(item: $workspaceToEdit) { workspace in
             EditWorkspaceSheet(workspace: workspace)
+        }
+        .sheet(item: $model.snippetPendingFill) { snippet in
+            SnippetFillSheet(snippet: snippet) { text in
+                model.pasteFilled(text)
+            }
         }
         .alert("Rename Workspace", isPresented: renameAlertPresented) {
             TextField("Name", text: $renameText)

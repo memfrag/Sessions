@@ -202,6 +202,7 @@ struct CommandPaletteView: View {
         commands.append(contentsOf: actionCommands)
         commands.append(contentsOf: workspaceCommands)
         commands.append(contentsOf: tabCommands)
+        commands.append(contentsOf: snippetCommands)
         commands.append(contentsOf: themeCommands)
         return commands
     }
@@ -330,6 +331,19 @@ struct CommandPaletteView: View {
                     model.selectedWorkspaceID = workspace.id
                     model.selectSession(id: session.id, in: workspace.id)
                 }
+            }
+        }
+    }
+
+    private var snippetCommands: [PaletteCommand] {
+        settings.snippets.map { snippet in
+            PaletteCommand(
+                id: "snippet-\(snippet.id)",
+                title: snippet.title.isEmpty ? "Untitled Snippet" : snippet.title,
+                subtitle: "Paste Snippet",
+                systemImage: "text.append"
+            ) { [model] in
+                model.useSnippet(snippet)
             }
         }
     }

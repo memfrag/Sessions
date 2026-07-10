@@ -68,6 +68,9 @@ import KeyValueStore
         /// User-imported terminal themes (e.g. from iTerm2 files).
         case customTerminalThemes
 
+        /// Reusable text snippets pasted into terminals.
+        case snippets
+
         // <-- (1 / 3) Add key for new property here
     }
 
@@ -182,6 +185,15 @@ import KeyValueStore
         }
     }
 
+    /// Reusable text snippets the user can paste into terminals. Stored as
+    /// a JSON blob in UserDefaults; if this list is ever expected to grow
+    /// large, move it to a dedicated file in Application Support.
+    var snippets: [Snippet] {
+        didSet {
+            store.save(snippets, for: .snippets)
+        }
+    }
+
     // <-- (2 / 3) Add property for new property here
 
     // MARK: Setup
@@ -213,6 +225,7 @@ import KeyValueStore
 
         confirmMultilinePaste = self.store.load(.confirmMultilinePaste, default: true)
         customTerminalThemes = self.store.load(.customTerminalThemes, default: [])
+        snippets = self.store.load(.snippets, default: [])
 
         // <-- (3 / 3) Add initializer for new property here.
     }

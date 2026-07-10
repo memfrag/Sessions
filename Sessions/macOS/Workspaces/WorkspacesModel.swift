@@ -27,6 +27,10 @@ final class WorkspacesModel {
     /// grab in `TerminalSessionView` yields while this is true.
     var isCommandPaletteVisible = false
 
+    /// A snippet awaiting placeholder values before pasting, when triggered
+    /// from the command palette. The main window hosts the fill sheet.
+    var snippetPendingFill: Snippet?
+
     /// Tab close awaiting user confirmation because the session is busy.
     var sessionPendingClose: SessionInfo.ID?
 
@@ -283,6 +287,26 @@ final class WorkspacesModel {
         guard let workspace = selectedWorkspace,
               let sessionID = selectedSessionID(in: workspace) else { return nil }
         return sessionRegistry.controllerIfExists(for: sessionID)
+    }
+
+    // MARK: - Snippets
+
+    /// Pastes a snippet into the active terminal. A snippet with
+    /// placeholders is routed to the fill sheet first (hosted by the main
+    /// window); a plain snippet is pasted immediately.
+    func useSnippet(_ snippet: Snippet) {
+        if snippet.placeholderNames.isEmpty {
+            selectedTerminalController?.sendText(snippet.content)
+        } else {
+            snippetPendingFill = snippet
+        }
+    }
+
+    /// Pastes already-substituted snippet text into the active terminal
+    /// and dismisses the fill sheet.
+    func pasteFilled(_ text: String) {
+        selectedTerminalController?.sendText(text)
+        snippetPendingFill = nil
     }
 
     // MARK: - Menu command actions (operate on the current selection)

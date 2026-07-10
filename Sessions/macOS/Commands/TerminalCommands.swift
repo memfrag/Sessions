@@ -18,6 +18,8 @@ struct TerminalCommands: Commands {
 
     @FocusedValue(\.workspacesModel) private var model
 
+    @Environment(\.openWindow) private var openWindow
+
     var body: some Commands {
 
         CommandGroup(replacing: .newItem) {
@@ -53,6 +55,11 @@ struct TerminalCommands: Commands {
             }
             .keyboardShortcut("p", modifiers: [.command, .shift])
             .disabled(model == nil)
+
+            Button("Snippets…") {
+                openWindow(id: SnippetsWindow.windowID)
+            }
+            .keyboardShortcut("s", modifiers: [.command, .shift])
         }
 
         CommandGroup(after: .textEditing) {

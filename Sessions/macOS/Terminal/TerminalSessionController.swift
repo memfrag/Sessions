@@ -230,6 +230,17 @@ final class TerminalSessionController {
         }
     }
 
+    /// Sends text to the session's shell as if typed, without a trailing
+    /// newline (used for snippet pasting). Mirrors the keystroke path:
+    /// dropped during replay, and clears any attention state.
+    func sendText(_ text: String) {
+        guard !isReplaying, !text.isEmpty else { return }
+        if needsAttention || claudeStatus != .none {
+            clearAttention()
+        }
+        attachment?.sendInput(Array(text.utf8))
+    }
+
     /// Forces a full repaint of the terminal from its buffer. SwiftTerm
     /// only invalidates rows that changed and never redraws on becoming
     /// visible, so a tab whose opacity-0 layer backing store was dropped
