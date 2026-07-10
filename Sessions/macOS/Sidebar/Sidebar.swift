@@ -43,38 +43,9 @@ struct Sidebar: View {
     var body: some View {
         @Bindable var model = model
         NavigationSplitView {
-            List(selection: $model.selectedWorkspaceID) {
-                Section(header: Text("Workspaces")) {
-                    ForEach(filteredWorkspaces) { workspace in
-                        WorkspaceSidebarItem(workspace: workspace) { workspace in
-                            renameText = workspace.name
-                            workspaceToRename = workspace
-                        } onEdit: { workspace in
-                            workspaceToEdit = workspace
-                        }
-                    }
-                    .onMove { source, destination in
-                        moveWorkspaces(from: source, to: destination)
-                    }
-                }
-            }
-            .listStyle(SidebarListStyle())
-            .frame(minWidth: 180, idealWidth: 200, maxWidth: 300)
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                SidebarFooter(filterText: $filterText) {
-                    model.isNewWorkspaceSheetPresented = true
-                }
-            }
+            sidebarList
         } detail: {
-            ZStack(alignment: .top) {
-                if let workspace = model.selectedWorkspace {
-                    WorkspacePane(workspace: workspace)
-                        .id(workspace.id)
-                } else {
-                    EmptyPane()
-                }
-                ServerStatusView(status: model.serverManager.status)
-            }
+            detailPane
         }
         .overlay {
             if model.isCommandPaletteVisible {
@@ -131,6 +102,44 @@ struct Sidebar: View {
             }
         } message: {
             Text("All terminal sessions in the workspace will be terminated.")
+        }
+    }
+
+    private var sidebarList: some View {
+        @Bindable var model = model
+        return List(selection: $model.selectedWorkspaceID) {
+            Section(header: Text("Workspaces")) {
+                ForEach(filteredWorkspaces) { workspace in
+                    WorkspaceSidebarItem(workspace: workspace) { workspace in
+                        renameText = workspace.name
+                        workspaceToRename = workspace
+                    } onEdit: { workspace in
+                        workspaceToEdit = workspace
+                    }
+                }
+                .onMove { source, destination in
+                    moveWorkspaces(from: source, to: destination)
+                }
+            }
+        }
+        .listStyle(SidebarListStyle())
+        .frame(minWidth: 180, idealWidth: 200, maxWidth: 300)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            SidebarFooter(filterText: $filterText) {
+                model.isNewWorkspaceSheetPresented = true
+            }
+        }
+    }
+
+    private var detailPane: some View {
+        ZStack(alignment: .top) {
+            if let workspace = model.selectedWorkspace {
+                WorkspacePane(workspace: workspace)
+                    .id(workspace.id)
+            } else {
+                EmptyPane()
+            }
+            ServerStatusView(status: model.serverManager.status)
         }
     }
 
