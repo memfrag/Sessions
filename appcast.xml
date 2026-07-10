@@ -3,6 +3,15 @@
     <channel>
         <title>Sessions</title>
         <item>
+            <title>1.2.2</title>
+            <pubDate>Fri, 10 Jul 2026 17:10:42 +0200</pubDate>
+            <sparkle:version>1.2.2</sparkle:version>
+            <sparkle:shortVersionString>1.2.2</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <enclosure url="https://github.com/memfrag/Sessions/releases/download/1.2.2/Sessions-1.2.2.dmg" length="4394086" type="application/octet-stream" sparkle:edSignature="D9wTjyW5CKSi6AV0SZaxnEr50Kx4IKoGQoXvqHpK34FN2Cqt3yjtUI0iGE1DtBcpcKCmsNoIuecRr8CjXLlXDA=="/>
+        </item>
+        <item>
             <title>1.2.1</title>
             <pubDate>Fri, 10 Jul 2026 13:11:08 +0200</pubDate>
             <sparkle:version>1.2.1</sparkle:version>
