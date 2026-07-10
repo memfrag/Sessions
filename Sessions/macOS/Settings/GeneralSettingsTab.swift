@@ -63,7 +63,7 @@ struct GeneralSettingsTab: View {
             shellIntegrationSection
             claudeCodeSection
         }
-        .padding(20)
+        .formStyle(.grouped)
     }
 
     private var shellIntegrationSection: some View {

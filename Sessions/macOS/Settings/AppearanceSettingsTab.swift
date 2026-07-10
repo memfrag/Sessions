@@ -19,7 +19,7 @@ struct AppearanceSettingsTab: View {
             inputSection
             renderingSection
         }
-        .padding(20)
+        .formStyle(.grouped)
         .task {
             monospacedFamilies = Self.findMonospacedFamilies()
         }
@@ -28,13 +28,13 @@ struct AppearanceSettingsTab: View {
     private var fontSection: some View {
         @Bindable var settings = settings
         return Section("Font") {
-            Picker("Font:", selection: $settings.terminalFontName) {
+            Picker("Font", selection: $settings.terminalFontName) {
                 Text("SF Mono (System)").tag("")
                 ForEach(monospacedFamilies, id: \.self) { family in
                     Text(family).tag(family)
                 }
             }
-            LabeledContent("Size:") {
+            LabeledContent("Size") {
                 Stepper(value: $settings.terminalFontSize, in: 9...24, step: 1) {
                     Text("\(Int(settings.terminalFontSize)) pt")
                         .monospacedDigit()
@@ -47,21 +47,21 @@ struct AppearanceSettingsTab: View {
     private var terminalSection: some View {
         @Bindable var settings = settings
         return Section("Terminal") {
-            Picker("Cursor:", selection: $settings.terminalCursorShape) {
+            Picker("Cursor", selection: $settings.terminalCursorShape) {
                 Text("Block").tag("block")
                 Text("Underline").tag("underline")
                 Text("Bar").tag("bar")
             }
             .pickerStyle(.segmented)
             Toggle("Blinking cursor", isOn: $settings.terminalCursorBlinks)
-            Picker("Scrollback:", selection: $settings.terminalScrollbackLines) {
+            Picker("Scrollback", selection: $settings.terminalScrollbackLines) {
                 Text("1 000 lines").tag(1_000)
                 Text("5 000 lines").tag(5_000)
                 Text("10 000 lines").tag(10_000)
                 Text("50 000 lines").tag(50_000)
                 Text("100 000 lines").tag(100_000)
             }
-            LabeledContent("Tab Width:") {
+            LabeledContent("Tab Width") {
                 Stepper(value: $settings.terminalTabStopWidth, in: 1...16, step: 1) {
                     Text("\(settings.terminalTabStopWidth) columns")
                         .monospacedDigit()

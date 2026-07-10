@@ -38,7 +38,6 @@ struct SettingsWindow: Scene {
                 }
                 .tag(Tabs.theme)
         }
-        .padding(20)
-        .frame(width: 460, height: 480)
+        .frame(width: 540, height: 560)
     }
 }

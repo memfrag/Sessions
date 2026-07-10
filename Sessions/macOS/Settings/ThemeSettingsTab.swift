@@ -43,7 +43,7 @@ struct ThemeSettingsTab: View {
             ansiColorsSection
             resetSection
         }
-        .padding(20)
+        .formStyle(.grouped)
         .fileImporter(
             isPresented: $isImporterPresented,
             allowedContentTypes: Self.importTypes
@@ -55,7 +55,7 @@ struct ThemeSettingsTab: View {
     private var themeSection: some View {
         @Bindable var settings = settings
         return Section("Theme") {
-            Picker("Theme:", selection: $settings.terminalThemeID) {
+            Picker("Theme", selection: $settings.terminalThemeID) {
                 ForEach(TerminalTheme.presets) { theme in
                     themePickerRow(theme)
                 }
@@ -86,10 +86,10 @@ struct ThemeSettingsTab: View {
 
     private var colorsSection: some View {
         Section("Colors") {
-            ColorPicker("Foreground:", selection: binding(\.foreground, base: effectiveTheme.foreground))
-            ColorPicker("Background:", selection: binding(\.background, base: effectiveTheme.background))
-            ColorPicker("Cursor:", selection: binding(\.cursor, base: effectiveTheme.cursor))
-            ColorPicker("Selection:", selection: binding(\.selection, base: effectiveTheme.selection))
+            ColorPicker("Foreground", selection: binding(\.foreground, base: effectiveTheme.foreground))
+            ColorPicker("Background", selection: binding(\.background, base: effectiveTheme.background))
+            ColorPicker("Cursor", selection: binding(\.cursor, base: effectiveTheme.cursor))
+            ColorPicker("Selection", selection: binding(\.selection, base: effectiveTheme.selection))
         }
     }
 
