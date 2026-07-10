@@ -11,11 +11,11 @@ public struct HelpWindow: Scene {
     public var body: some Scene {
         Window("Sessions Help", id: Self.windowID) {
             HelpContent()
-                .frame(minWidth: 520, minHeight: 400)
+                .frame(minWidth: 560, minHeight: 460)
         }
         .commandsRemoved() // Don't show window in Windows menu
         .defaultPosition(.center)
-        .defaultSize(width: 600, height: 520)
+        .defaultSize(width: 680, height: 640)
         .windowResizability(.contentMinSize)
     }
 }
