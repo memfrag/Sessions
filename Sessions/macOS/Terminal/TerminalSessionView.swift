@@ -49,6 +49,11 @@ struct TerminalSessionView: NSViewRepresentable {
             guard !controller.isFindBarVisible,
                   !model.isCommandPaletteVisible,
                   let window = terminalView.window,
+                  // Only claim focus in the key window. Grabbing focus in a
+                  // background window makes SwiftTerm fire a focus-in event
+                  // (mode 1004) that reaches the shell — which a TUI prompt
+                  // (e.g. Claude Code's question) can read as a keystroke.
+                  window.isKeyWindow,
                   window.firstResponder !== terminalView else { return }
             window.makeFirstResponder(terminalView)
         }
