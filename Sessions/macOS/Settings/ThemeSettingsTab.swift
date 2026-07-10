@@ -37,51 +37,11 @@ struct ThemeSettingsTab: View {
     @State private var importError: String?
 
     var body: some View {
-        @Bindable var settings = settings
         Form {
-            Section("Theme") {
-                Picker("Theme:", selection: $settings.terminalThemeID) {
-                    ForEach(TerminalTheme.presets) { theme in
-                        themePickerRow(theme)
-                    }
-                    if !settings.customTerminalThemes.isEmpty {
-                        Divider()
-                        ForEach(settings.customTerminalThemes) { theme in
-                            themePickerRow(theme)
-                        }
-                    }
-                }
-                HStack {
-                    Button("Import iTerm2 Theme…") {
-                        isImporterPresented = true
-                    }
-                    if selectedCustomTheme != nil {
-                        Button("Delete Theme", role: .destructive) {
-                            deleteSelectedCustomTheme()
-                        }
-                    }
-                }
-                if let importError {
-                    Text(importError)
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                }
-            }
-            Section("Colors") {
-                ColorPicker("Foreground:", selection: binding(\.foreground, base: effectiveTheme.foreground))
-                ColorPicker("Background:", selection: binding(\.background, base: effectiveTheme.background))
-                ColorPicker("Cursor:", selection: binding(\.cursor, base: effectiveTheme.cursor))
-                ColorPicker("Selection:", selection: binding(\.selection, base: effectiveTheme.selection))
-            }
-            Section("ANSI Colors") {
-                ansiGrid
-            }
-            Section {
-                Button("Reset to Theme Colors") {
-                    settings.terminalThemeOverrides[settings.terminalThemeID] = nil
-                }
-                .disabled(!hasOverrides)
-            }
+            themeSection
+            colorsSection
+            ansiColorsSection
+            resetSection
         }
         .padding(20)
         .fileImporter(
@@ -89,6 +49,62 @@ struct ThemeSettingsTab: View {
             allowedContentTypes: Self.importTypes
         ) { result in
             importTheme(from: result)
+        }
+    }
+
+    private var themeSection: some View {
+        @Bindable var settings = settings
+        return Section("Theme") {
+            Picker("Theme:", selection: $settings.terminalThemeID) {
+                ForEach(TerminalTheme.presets) { theme in
+                    themePickerRow(theme)
+                }
+                if !settings.customTerminalThemes.isEmpty {
+                    Divider()
+                    ForEach(settings.customTerminalThemes) { theme in
+                        themePickerRow(theme)
+                    }
+                }
+            }
+            HStack {
+                Button("Import iTerm2 Theme…") {
+                    isImporterPresented = true
+                }
+                if selectedCustomTheme != nil {
+                    Button("Delete Theme", role: .destructive) {
+                        deleteSelectedCustomTheme()
+                    }
+                }
+            }
+            if let importError {
+                Text(importError)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
+        }
+    }
+
+    private var colorsSection: some View {
+        Section("Colors") {
+            ColorPicker("Foreground:", selection: binding(\.foreground, base: effectiveTheme.foreground))
+            ColorPicker("Background:", selection: binding(\.background, base: effectiveTheme.background))
+            ColorPicker("Cursor:", selection: binding(\.cursor, base: effectiveTheme.cursor))
+            ColorPicker("Selection:", selection: binding(\.selection, base: effectiveTheme.selection))
+        }
+    }
+
+    private var ansiColorsSection: some View {
+        Section("ANSI Colors") {
+            ansiGrid
+        }
+    }
+
+    private var resetSection: some View {
+        Section {
+            Button("Reset to Theme Colors") {
+                settings.terminalThemeOverrides[settings.terminalThemeID] = nil
+            }
+            .disabled(!hasOverrides)
         }
     }
 

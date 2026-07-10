@@ -59,79 +59,84 @@ struct GeneralSettingsTab: View {
     @Environment(AppSettings.self) private var settings
 
     var body: some View {
-        @Bindable var settings = settings
         Form {
-            Section("Shell Integration") {
-                Text("""
-                Sessions follows your shell's working directory to open new \
-                tabs in the right place and show the directory in tab \
-                tooltips. This is set up automatically for zsh. For other \
-                shells, add the equivalent of this to your shell config:
-                """)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                ScrollView(.horizontal) {
-                    Text(Self.shellIntegrationSnippet)
-                        .font(.caption.monospaced())
-                        .textSelection(.enabled)
-                        .padding(8)
-                }
-                .frame(maxHeight: 150)
-                .background(
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(Color.primary.opacity(0.05))
-                )
-                Button("Copy Snippet") {
-                    let pasteboard = NSPasteboard.general
-                    pasteboard.clearContents()
-                    pasteboard.setString(Self.shellIntegrationSnippet, forType: .string)
-                }
-            }
-            Section("Claude Code Integration") {
-                Text("""
-                Sessions shows each tab's Claude state: an hourglass while \
-                Claude is working, an orange bell when it needs your input, \
-                and a green checkmark when it is done. In zsh this works \
-                automatically — the `claude` command is wrapped to load the \
-                hooks. For other shells, merge these hooks into \
-                ~/.claude/settings.json:
-                """)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                ScrollView(.horizontal) {
-                    Text(Self.claudeCodeHookSnippet)
-                        .font(.caption.monospaced())
-                        .textSelection(.enabled)
-                        .padding(8)
-                }
-                .frame(maxHeight: 130)
-                .background(
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(Color.primary.opacity(0.05))
-                )
-                Button("Copy Hook") {
-                    let pasteboard = NSPasteboard.general
-                    pasteboard.clearContents()
-                    pasteboard.setString(Self.claudeCodeHookSnippet, forType: .string)
-                }
-                Toggle(
-                    "Also show Notification Center alerts",
-                    isOn: $settings.attentionNotificationsEnabled
-                )
-                Toggle(
-                    "Play a sound",
-                    isOn: $settings.attentionNotificationSoundEnabled
-                )
-                .disabled(!settings.attentionNotificationsEnabled)
-                Text("""
-                Any program that rings the terminal bell or sends an OSC 9 \
-                notification triggers the same highlight.
-                """)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            }
+            shellIntegrationSection
+            claudeCodeSection
         }
         .padding(20)
+    }
+
+    private var shellIntegrationSection: some View {
+        Section("Shell Integration") {
+            Text("""
+            Sessions follows your shell's working directory to open new \
+            tabs in the right place and show the directory in tab \
+            tooltips. This is set up automatically for zsh. For other \
+            shells, add the equivalent of this to your shell config:
+            """)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            snippetBox(Self.shellIntegrationSnippet, maxHeight: 150)
+            Button("Copy Snippet") {
+                copyToPasteboard(Self.shellIntegrationSnippet)
+            }
+        }
+    }
+
+    private var claudeCodeSection: some View {
+        @Bindable var settings = settings
+        return Section("Claude Code Integration") {
+            Text("""
+            Sessions shows each tab's Claude state: an hourglass while \
+            Claude is working, an orange bell when it needs your input, \
+            and a green checkmark when it is done. In zsh this works \
+            automatically — the `claude` command is wrapped to load the \
+            hooks. For other shells, merge these hooks into \
+            ~/.claude/settings.json:
+            """)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            snippetBox(Self.claudeCodeHookSnippet, maxHeight: 130)
+            Button("Copy Hook") {
+                copyToPasteboard(Self.claudeCodeHookSnippet)
+            }
+            Toggle(
+                "Also show Notification Center alerts",
+                isOn: $settings.attentionNotificationsEnabled
+            )
+            Toggle(
+                "Play a sound",
+                isOn: $settings.attentionNotificationSoundEnabled
+            )
+            .disabled(!settings.attentionNotificationsEnabled)
+            Text("""
+            Any program that rings the terminal bell or sends an OSC 9 \
+            notification triggers the same highlight.
+            """)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+    }
+
+    /// A scrollable, selectable monospaced snippet box.
+    private func snippetBox(_ text: String, maxHeight: CGFloat) -> some View {
+        ScrollView(.horizontal) {
+            Text(text)
+                .font(.caption.monospaced())
+                .textSelection(.enabled)
+                .padding(8)
+        }
+        .frame(maxHeight: maxHeight)
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(Color.primary.opacity(0.05))
+        )
+    }
+
+    private func copyToPasteboard(_ string: String) {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(string, forType: .string)
     }
 }
 
