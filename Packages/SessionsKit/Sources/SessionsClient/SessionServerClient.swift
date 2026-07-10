@@ -318,6 +318,10 @@ public actor SessionServerClient {
         send(.moveSession(id: id, toIndex: toIndex))
     }
 
+    public func clearScrollback(sessionID: UUID) {
+        send(.clearScrollback(sessionID: sessionID))
+    }
+
     public func moveSessionToWorkspace(id: UUID, workspaceID: UUID, toIndex: Int? = nil) {
         send(.moveSessionToWorkspace(id: id, workspaceID: workspaceID, toIndex: toIndex))
     }

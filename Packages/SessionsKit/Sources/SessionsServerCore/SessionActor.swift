@@ -342,6 +342,12 @@ actor SessionActor {
         ring.snapshot()
     }
 
+    /// Discards the scrollback history so a later re-attach replays nothing
+    /// (the client clears its own view separately).
+    func clearScrollback() {
+        ring.clear()
+    }
+
     /// Seeds the ring with scrollback restored from disk. Only meaningful
     /// for a freshly materialized dead session with an empty ring.
     func preloadScrollback(_ bytes: [UInt8]) {

@@ -88,6 +88,10 @@ struct TerminalTabItem: View {
                     inFileViewerRootedAtPath: controller.currentDirectory ?? workspace.rootPath
                 )
             }
+            Button("Clear Scrollback") {
+                controller.clearScrollback()
+            }
+            Divider()
             Button("Close Tab") {
                 model.requestCloseSession(id: session.id)
             }

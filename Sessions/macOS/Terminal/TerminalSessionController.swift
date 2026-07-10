@@ -230,6 +230,25 @@ final class TerminalSessionController {
         }
     }
 
+    /// Clears the scrollback (like a terminal "clear buffer") and redraws
+    /// the prompt. Clears the local view's scrollback, tells the server to
+    /// drop its ring (so a re-attach won't replay it), then sends Ctrl-L so
+    /// the shell repaints its prompt on a clean screen.
+    func clearScrollback() {
+        guard !isReplaying else { return }
+        // ESC[3J erases the scrollback in the local view.
+        terminalView.feed(byteArray: ArraySlice(Array("\u{1B}[3J".utf8)))
+        let sessionID = self.sessionID
+        let client = self.client
+        let attachment = self.attachment
+        Task {
+            // Clear the server ring before the Ctrl-L redraw output lands,
+            // so the ring ends up holding just the fresh prompt.
+            await client.clearScrollback(sessionID: sessionID)
+            attachment?.sendInput([0x0C])
+        }
+    }
+
     /// Sends text to the session's shell as if typed, without a trailing
     /// newline (used for snippet pasting). Mirrors the keystroke path:
     /// dropped during replay, and clears any attention state.

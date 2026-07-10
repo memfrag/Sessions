@@ -48,6 +48,9 @@ public enum ControlMessage: Codable, Sendable, Equatable {
     /// Respawns the shell of a dead session.
     case restartSession(id: UUID)
     case moveSession(id: UUID, toIndex: Int)
+    /// Clears a session's server-side scrollback ring so a later re-attach
+    /// does not replay the cleared history.
+    case clearScrollback(sessionID: UUID)
     /// Moves a session to another workspace (drag a tab onto a sidebar
     /// row). A pure state move: the PTY, scrollback, and any attachment
     /// are untouched. `toIndex` nil appends at the end.

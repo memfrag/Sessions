@@ -189,7 +189,8 @@ struct FrameCodecTests {
             .createWorkspace(name: "W", rootPath: "/tmp", startupCommand: "claude", colorID: "teal"),
             .updateWorkspace(id: UUID(), name: "W2", startupCommand: nil, colorID: "red"),
             .moveSessionToWorkspace(id: UUID(), workspaceID: UUID(), toIndex: 2),
-            .moveSessionToWorkspace(id: UUID(), workspaceID: UUID(), toIndex: nil)
+            .moveSessionToWorkspace(id: UUID(), workspaceID: UUID(), toIndex: nil),
+            .clearScrollback(sessionID: UUID())
         ]
         for message in messages {
             let encoded = try FrameEncoder.encode(.control(message))

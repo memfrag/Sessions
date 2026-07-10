@@ -217,6 +217,8 @@ public actor ServerCore {
             persistAndBroadcast()
         case .restartSession(let id):
             await restartSession(id: id, connection: connection)
+        case .clearScrollback(let sessionID):
+            await sessions[sessionID]?.clearScrollback()
         case .moveSession(let id, let toIndex):
             guard let workspaceIndex = state.workspaces.firstIndex(where: { workspace in
                 workspace.sessions.contains { $0.id == id }
