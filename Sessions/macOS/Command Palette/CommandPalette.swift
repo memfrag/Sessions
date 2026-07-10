@@ -5,43 +5,6 @@
 import AppKit
 import SwiftUI
 
-// MARK: - Command model
-
-/// One runnable entry in the command palette.
-struct PaletteCommand: Identifiable {
-
-    let id: String
-
-    let title: String
-
-    /// Secondary line shown under the title (e.g. "Switch to Workspace").
-    let subtitle: String?
-
-    let systemImage: String
-
-    /// Display-only hint like "⌘T" for commands that also have a menu shortcut.
-    let shortcutHint: String?
-
-    let action: @MainActor () -> Void
-
-    init(
-        id: String,
-        title: String,
-        subtitle: String? = nil,
-        systemImage: String,
-        shortcutHint: String? = nil,
-        action: @escaping @MainActor () -> Void
-    ) {
-        self.id = id
-        self.title = title
-        self.subtitle = subtitle
-        self.systemImage = systemImage
-        self.shortcutHint = shortcutHint
-        self.action = action
-    }
-
-}
-
 // MARK: - Overlay
 
 /// Full-window overlay hosting the palette: dimmed click-to-dismiss
@@ -96,15 +59,8 @@ struct CommandPaletteView: View {
             }
         }
         .frame(width: 520)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(nsColor: .windowBackgroundColor))
-                .shadow(radius: 16, y: 4)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .strokeBorder(Color.primary.opacity(0.15), lineWidth: 1)
-        )
+        .background(panelBackground)
+        .overlay(panelBorder)
         .onExitCommand {
             dismiss()
         }
@@ -122,6 +78,17 @@ struct CommandPaletteView: View {
         .onChange(of: query) {
             selectedIndex = 0
         }
+    }
+
+    private var panelBackground: some View {
+        RoundedRectangle(cornerRadius: 12)
+            .fill(Color(nsColor: .windowBackgroundColor))
+            .shadow(radius: 16, y: 4)
+    }
+
+    private var panelBorder: some View {
+        RoundedRectangle(cornerRadius: 12)
+            .strokeBorder(Color.primary.opacity(0.15), lineWidth: 1)
     }
 
     private var queryField: some View {
@@ -380,46 +347,5 @@ struct CommandPaletteView: View {
                 settings.terminalThemeID = theme.id
             }
         }
-    }
-}
-
-// MARK: - Row
-
-private struct CommandPaletteRow: View {
-
-    let command: PaletteCommand
-
-    let isSelected: Bool
-
-    var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: command.systemImage)
-                .frame(width: 20)
-                .foregroundStyle(isSelected ? AnyShapeStyle(.white) : AnyShapeStyle(.secondary))
-            VStack(alignment: .leading, spacing: 1) {
-                Text(command.title)
-                    .lineLimit(1)
-                    .foregroundStyle(isSelected ? AnyShapeStyle(.white) : AnyShapeStyle(.primary))
-                if let subtitle = command.subtitle {
-                    Text(subtitle)
-                        .font(.caption)
-                        .lineLimit(1)
-                        .foregroundStyle(isSelected ? AnyShapeStyle(.white.opacity(0.8)) : AnyShapeStyle(.secondary))
-                }
-            }
-            Spacer()
-            if let hint = command.shortcutHint {
-                Text(hint)
-                    .font(.callout)
-                    .foregroundStyle(isSelected ? AnyShapeStyle(.white.opacity(0.8)) : AnyShapeStyle(.secondary))
-            }
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(
-            RoundedRectangle(cornerRadius: 6)
-                .fill(isSelected ? Color.accentColor : Color.clear)
-        )
-        .contentShape(Rectangle())
     }
 }
