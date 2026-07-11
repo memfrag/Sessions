@@ -202,6 +202,17 @@ final class GhosttyEmulator: NSObject, TerminalEmulator {
             .windowPaddingX(Self.windowPaddingX)
             .windowPaddingY(Self.windowPaddingY)
 
+        // Clear libghostty's default keybinds so app-level shortcuts (⌘⇧P
+        // command palette, ⌘T new tab, ⌘W close, ⌘1–9, etc.) fall through to
+        // Sessions' menus instead of being consumed by the focused terminal.
+        // Re-add only the terminal clipboard actions Sessions wants the
+        // engine to handle.
+        configuration = configuration
+            .custom("keybind", "clear")
+            .custom("keybind", "super+c=copy_to_clipboard")
+            .custom("keybind", "super+v=paste_from_clipboard")
+            .custom("keybind", "super+a=select_all")
+
         return configuration
     }
 
