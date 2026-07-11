@@ -33,9 +33,16 @@ final class TerminalStreamScanner {
     /// A standalone BEL (0x07) that was not an OSC/string terminator.
     var onBell: (() -> Void)?
 
+    /// Whether the app currently has bracketed-paste mode (DECSET 2004) on.
+    /// Tracked from the raw stream so a paste can be wrapped in bracketed
+    /// markers only when the app will consume them — otherwise the markers
+    /// leak into the shell's line editor and corrupt the prompt.
+    private(set) var bracketedPasteEnabled = false
+
     private enum State {
         case normal
         case escape       // saw ESC in normal text
+        case csi          // collecting a CSI sequence (ESC [ …)
         case osc          // collecting an OSC payload (ESC ] …)
         case oscEscape    // saw ESC inside an OSC (possible ST terminator)
         case string       // opaque DCS/SOS/PM/APC string (skip until ST/BEL)
@@ -44,6 +51,7 @@ final class TerminalStreamScanner {
 
     private var state: State = .normal
     private var oscBuffer: [UInt8] = []
+    private var csiBuffer: [UInt8] = []
 
     /// Cap the OSC buffer so a pathological/huge payload (e.g. an OSC 52
     /// clipboard blob we don't dispatch anyway) can't grow unbounded. The
@@ -62,6 +70,9 @@ final class TerminalStreamScanner {
 
             case .escape:
                 switch byte {
+                case 0x5B: // '[' → CSI (we track DECSET/DECRST for mode 2004)
+                    csiBuffer.removeAll(keepingCapacity: true)
+                    state = .csi
                 case 0x5D: // ']' → OSC
                     oscBuffer.removeAll(keepingCapacity: true)
                     state = .osc
@@ -69,8 +80,19 @@ final class TerminalStreamScanner {
                     state = .string
                 case 0x1B: // another ESC; keep waiting
                     state = .escape
-                default: // CSI and other short escapes carry no BEL/OSC we track
+                default: // other short escapes carry no BEL/OSC we track
                     state = .normal
+                }
+
+            case .csi:
+                // Final byte is 0x40–0x7E; params/intermediates are 0x20–0x3F.
+                if byte == 0x1B {
+                    state = .escape // aborted CSI; a new sequence begins
+                } else if (0x40...0x7E).contains(byte) {
+                    dispatchCSI(final: byte)
+                    state = .normal
+                } else if csiBuffer.count < 32 {
+                    csiBuffer.append(byte)
                 }
 
             case .osc:
@@ -116,10 +138,24 @@ final class TerminalStreamScanner {
     }
 
     /// Resets the parser state. Sequences don't span an attach, so the
-    /// controller resets before replaying a fresh stream.
+    /// controller resets before replaying a fresh stream. Bracketed-paste
+    /// mode is re-established from the replayed stream.
     func reset() {
         state = .normal
         oscBuffer.removeAll(keepingCapacity: true)
+        csiBuffer.removeAll(keepingCapacity: true)
+        bracketedPasteEnabled = false
+    }
+
+    /// Handles the CSI sequences we care about — currently only
+    /// DECSET/DECRST of mode 2004 (bracketed paste): `ESC[?2004h` / `ESC[?2004l`.
+    private func dispatchCSI(final: UInt8) {
+        guard String(bytes: csiBuffer, encoding: .utf8) == "?2004" else { return }
+        if final == 0x68 { // 'h' → set
+            bracketedPasteEnabled = true
+        } else if final == 0x6C { // 'l' → reset
+            bracketedPasteEnabled = false
+        }
     }
 
     private func dispatchOSC() {

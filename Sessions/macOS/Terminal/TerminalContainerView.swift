@@ -37,11 +37,35 @@ final class TerminalContainerView: NSView {
         }
     }
 
+    /// Handles file URLs dropped onto the terminal. Returns whether the drop
+    /// was accepted. Set by the hosting representable.
+    ///
+    /// The drop is handled here in AppKit rather than with a SwiftUI
+    /// `.dropDestination` because the terminal engine's Metal view fills the
+    /// container and shadows SwiftUI's drop target. The Metal view doesn't
+    /// register for dragged types, so the drag falls through to this
+    /// registered superview.
+    var onDropFileURLs: (([URL]) -> Bool)?
+
     override var wantsUpdateLayer: Bool { true }
 
     init() {
         super.init(frame: .zero)
         wantsLayer = true
+    }
+
+    /// Registers/unregisters as a file-drop destination. Only the selected
+    /// tab enables drops: every tab in a workspace stays mounted and stacked
+    /// in the same place, so if they all registered, AppKit would route a
+    /// drop to whichever it hit first rather than the visible tab. An
+    /// unregistered sibling is transparent to drag hit-testing, so the
+    /// selected (registered) container receives the drop even when stacked.
+    func setDropEnabled(_ enabled: Bool) {
+        if enabled {
+            registerForDraggedTypes([.fileURL])
+        } else {
+            unregisterDraggedTypes()
+        }
     }
 
     @available(*, unavailable)
@@ -78,5 +102,28 @@ final class TerminalContainerView: NSView {
 
     override func updateLayer() {
         layer?.backgroundColor = backgroundColor.cgColor
+    }
+
+    // MARK: - Drag & drop
+
+    override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+        droppedFileURLs(sender).isEmpty ? [] : .copy
+    }
+
+    override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation {
+        droppedFileURLs(sender).isEmpty ? [] : .copy
+    }
+
+    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        let urls = droppedFileURLs(sender)
+        guard !urls.isEmpty else { return false }
+        return onDropFileURLs?(urls) ?? false
+    }
+
+    private func droppedFileURLs(_ sender: NSDraggingInfo) -> [URL] {
+        sender.draggingPasteboard.readObjects(
+            forClasses: [NSURL.self],
+            options: [.urlReadingFileURLsOnly: true]
+        ) as? [URL] ?? []
     }
 }

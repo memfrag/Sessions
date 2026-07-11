@@ -173,6 +173,29 @@ final class TerminalSessionController {
         }
     }
 
+    /// Inserts text as a paste. When the app has bracketed-paste mode on
+    /// (tracked from the raw stream), the text is wrapped in bracketed-paste
+    /// markers so it's treated as pasted, not typed — this is what lets an
+    /// app like Claude Code attach a dropped image path as "[Image N]". When
+    /// the mode is off (e.g. a bare shell prompt), the markers are omitted so
+    /// they can't leak into the line editor and corrupt the prompt.
+    ///
+    /// Used for Finder drops. Snippet insertion uses `sendText` (plain typing).
+    func paste(_ text: String) {
+        guard !isReplaying, !text.isEmpty else { return }
+        if needsAttention || claudeStatus != .none {
+            clearAttention()
+        }
+        var bytes = Array(text.utf8)
+        if scanner.bracketedPasteEnabled {
+            // ESC[200~ … ESC[201~
+            bytes = [0x1B, 0x5B, 0x32, 0x30, 0x30, 0x7E]
+                + bytes
+                + [0x1B, 0x5B, 0x32, 0x30, 0x31, 0x7E]
+        }
+        attachment?.sendInput(bytes)
+    }
+
     /// Sends text to the session's shell as if typed, without a trailing
     /// newline (used for snippet pasting). Mirrors the keystroke path:
     /// dropped during replay, and clears any attention state.

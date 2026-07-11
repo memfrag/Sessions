@@ -94,33 +94,9 @@ private struct TerminalSessionPage: View {
             .onAppear {
                 restartIfDormant()
             }
-            // Dropping files/folders from Finder types their shell-escaped
-            // paths at the prompt (no newline — the user runs it).
-            .dropDestination(for: URL.self) { urls, _ in
-                guard !urls.isEmpty else { return false }
-                let paths = urls.map { Self.shellEscape($0.path(percentEncoded: false)) }
-                controller.sendText(paths.joined(separator: " ") + " ")
-                return true
-            }
-    }
-
-    /// Characters that must be backslash-escaped so a dropped path is
-    /// inserted literally, the way Terminal.app does.
-    private static let shellSpecial: Set<Character> = [
-        " ", "\t", "\"", "'", "`", "$", "&", "|", ";",
-        "<", ">", "(", ")", "*", "?", "[", "]", "{", "}",
-        "~", "#", "!", "\\"
-    ]
-
-    private static func shellEscape(_ path: String) -> String {
-        var result = ""
-        for character in path {
-            if shellSpecial.contains(character) {
-                result.append("\\")
-            }
-            result.append(character)
-        }
-        return result
+            // Finder file drops onto the terminal are handled in AppKit by
+            // TerminalContainerView (a SwiftUI .dropDestination is shadowed by
+            // the engine's Metal view).
     }
 
     private func restartIfDormant() {

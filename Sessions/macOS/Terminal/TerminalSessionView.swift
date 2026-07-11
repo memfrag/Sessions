@@ -24,8 +24,39 @@ struct TerminalSessionView: NSViewRepresentable {
         let terminalView = controller.emulator.view
         container.addSubview(terminalView)
         container.hostedView = terminalView
+        // Dropping files/folders from Finder pastes their shell-escaped paths
+        // at the prompt (no newline — the user runs it). A real bracketed
+        // paste, so an app like Claude Code attaches a dropped image as
+        // "[Image N]". Handled in AppKit because the engine's Metal view
+        // shadows a SwiftUI drop target.
+        let controller = self.controller
+        container.onDropFileURLs = { urls in
+            let paths = urls.map { Self.shellEscape($0.path(percentEncoded: false)) }
+            controller.paste(paths.joined(separator: " "))
+            return true
+        }
+        container.setDropEnabled(isSelected)
         applyAppearance(container: container)
         return container
+    }
+
+    /// Characters that must be backslash-escaped so a dropped path is
+    /// inserted literally, the way Terminal.app does.
+    private static let shellSpecial: Set<Character> = [
+        " ", "\t", "\"", "'", "`", "$", "&", "|", ";",
+        "<", ">", "(", ")", "*", "?", "[", "]", "{", "}",
+        "~", "#", "!", "\\"
+    ]
+
+    private static func shellEscape(_ path: String) -> String {
+        var result = ""
+        for character in path {
+            if shellSpecial.contains(character) {
+                result.append("\\")
+            }
+            result.append(character)
+        }
+        return result
     }
 
     func updateNSView(_ nsView: TerminalContainerView, context: Context) {
@@ -38,6 +69,9 @@ struct TerminalSessionView: NSViewRepresentable {
             nsView.hostedView = terminalView
         }
         applyAppearance(container: nsView)
+        // Only the selected tab accepts file drops (all tabs stay mounted and
+        // stacked, so drops must target the visible one).
+        nsView.setDropEnabled(isSelected)
         guard isSelected, !controller.isFindBarVisible, !model.isCommandPaletteVisible else { return }
         // The conditions are re-checked when the block fires: a grab
         // scheduled just before the find bar or command palette opened
