@@ -110,9 +110,7 @@ struct TerminalSessionView: NSViewRepresentable {
             cursorBlinks: settings.terminalCursorBlinks,
             scrollbackLines: settings.terminalScrollbackLines,
             tabStopWidth: settings.terminalTabStopWidth,
-            optionAsMeta: settings.optionAsMetaKey,
-            confirmMultilinePaste: settings.confirmMultilinePaste,
-            useMetal: settings.useMetalRenderer
+            optionAsMeta: settings.optionAsMetaKey
         )
         controller.applyAppearance(appearance)
         // Keep the margin container's background matching the terminal.

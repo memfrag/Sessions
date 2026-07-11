@@ -33,9 +33,6 @@ import KeyValueStore
         /// font (SF Mono).
         case terminalFontName
 
-        /// Whether to use SwiftTerm's experimental Metal renderer.
-        case useMetalRenderer
-
         /// Whether the Option key acts as Meta (ESC prefix) instead of
         /// composing characters.
         case optionAsMetaKey
@@ -61,9 +58,6 @@ import KeyValueStore
 
         /// Whether attention notifications play a sound.
         case attentionNotificationSoundEnabled
-
-        /// Whether pasting text with newlines asks for confirmation.
-        case confirmMultilinePaste
 
         /// User-imported terminal themes (e.g. from iTerm2 files).
         case customTerminalThemes
@@ -101,13 +95,6 @@ import KeyValueStore
     public var terminalFontName: String {
         didSet {
             store.save(terminalFontName, for: .terminalFontName)
-        }
-    }
-
-    /// Whether to use SwiftTerm's experimental Metal renderer.
-    public var useMetalRenderer: Bool {
-        didSet {
-            store.save(useMetalRenderer, for: .useMetalRenderer)
         }
     }
 
@@ -170,13 +157,6 @@ import KeyValueStore
         }
     }
 
-    /// Whether pasting text with newlines asks for confirmation first
-    /// (the shell may execute each line immediately).
-    public var confirmMultilinePaste: Bool {
-        didSet {
-            store.save(confirmMultilinePaste, for: .confirmMultilinePaste)
-        }
-    }
 
     /// User-imported terminal themes (e.g. from iTerm2 .itermcolors files).
     var customTerminalThemes: [TerminalTheme] {
@@ -213,7 +193,6 @@ import KeyValueStore
         terminalFontSize = self.store.load(.terminalFontSize, default: 13)
         terminalThemeID = self.store.load(.terminalThemeID, default: "system")
         terminalFontName = self.store.load(.terminalFontName, default: "")
-        useMetalRenderer = self.store.load(.useMetalRenderer, default: false)
         optionAsMetaKey = self.store.load(.optionAsMetaKey, default: false)
         terminalScrollbackLines = self.store.load(.terminalScrollbackLines, default: 10_000)
         terminalTabStopWidth = self.store.load(.terminalTabStopWidth, default: 8)
@@ -223,7 +202,6 @@ import KeyValueStore
         attentionNotificationsEnabled = self.store.load(.attentionNotificationsEnabled, default: false)
         attentionNotificationSoundEnabled = self.store.load(.attentionNotificationSoundEnabled, default: true)
 
-        confirmMultilinePaste = self.store.load(.confirmMultilinePaste, default: true)
         customTerminalThemes = self.store.load(.customTerminalThemes, default: [])
         snippets = self.store.load(.snippets, default: [])
 

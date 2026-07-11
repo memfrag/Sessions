@@ -118,10 +118,6 @@ struct TerminalAppearance {
 
     var optionAsMeta: Bool
 
-    var confirmMultilinePaste: Bool
-
-    var useMetal: Bool
-
     /// Empty name means the system monospaced font (SF Mono). Otherwise a
     /// font family; falls back to the system monospaced font if missing.
     static func font(name: String, size: CGFloat) -> NSFont {

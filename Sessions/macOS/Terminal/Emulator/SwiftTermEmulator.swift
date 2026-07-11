@@ -3,17 +3,14 @@
 //
 
 import AppKit
-import OSLog
 import SwiftTerm
 
-/// SwiftTerm-backed `TerminalEmulator`. Wraps `SessionsTerminalView` and is
-/// the single place that knows SwiftTerm's API.
+/// SwiftTerm-backed `TerminalEmulator` and the single place that knows
+/// SwiftTerm's API.
 @MainActor
 final class SwiftTermEmulator: NSObject, TerminalEmulator {
 
-    private static let logger = Logger(subsystem: "io.apparata.Sessions", category: "SwiftTermEmulator")
-
-    private let terminalView: SessionsTerminalView
+    private let terminalView: TerminalView
 
     weak var delegate: TerminalEmulatorDelegate?
 
@@ -39,10 +36,8 @@ final class SwiftTermEmulator: NSObject, TerminalEmulator {
 
     private var appliedTabStopWidth: Int?
 
-    private var metalApplyFailedForSetting: Bool?
-
     override init() {
-        terminalView = SessionsTerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
+        terminalView = TerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
         super.init()
         terminalView.terminalDelegate = self
         // Attention sequences (OSC 0/2/7/9, BEL) are parsed by the controller's
@@ -106,9 +101,7 @@ final class SwiftTermEmulator: NSObject, TerminalEmulator {
         }
 
         let needsReattach = applyBufferOptions(appearance, cursorStyle: cursorStyle)
-        applyRenderer(useMetal: appearance.useMetal)
 
-        terminalView.confirmsMultilinePaste = appearance.confirmMultilinePaste
         if terminalView.optionAsMetaKey != appearance.optionAsMeta {
             terminalView.optionAsMetaKey = appearance.optionAsMeta
         }
@@ -172,23 +165,6 @@ final class SwiftTermEmulator: NSObject, TerminalEmulator {
         terminal.options = options
         terminal.setup(isReset: false)
         return !isFirstApplication && changed
-    }
-
-    /// Experimental Metal renderer; on failure logs once and does not retry
-    /// until the setting changes. Only applies when in a window.
-    private func applyRenderer(useMetal: Bool) {
-        guard terminalView.window != nil,
-              terminalView.isUsingMetalRenderer != useMetal,
-              metalApplyFailedForSetting != useMetal else {
-            return
-        }
-        do {
-            try terminalView.setUseMetal(useMetal)
-            metalApplyFailedForSetting = nil
-        } catch {
-            metalApplyFailedForSetting = useMetal
-            Self.logger.error("Failed to toggle Metal renderer to \(useMetal): \(error)")
-        }
     }
 
     private static func cursorStyle(shape: TerminalCursorShape, blinks: Bool) -> CursorStyle {

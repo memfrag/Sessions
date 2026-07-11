@@ -17,7 +17,6 @@ struct AppearanceSettingsTab: View {
             fontSection
             terminalSection
             inputSection
-            renderingSection
         }
         .formStyle(.grouped)
         .task {
@@ -82,23 +81,6 @@ struct AppearanceSettingsTab: View {
             """)
             .font(.caption)
             .foregroundStyle(.secondary)
-            Toggle("Confirm before pasting multiple lines", isOn: $settings.confirmMultilinePaste)
-            Text("""
-            Pasted text that contains newlines may be executed by the \
-            shell immediately; asking first prevents accidents.
-            """)
-            .font(.caption)
-            .foregroundStyle(.secondary)
-        }
-    }
-
-    private var renderingSection: some View {
-        @Bindable var settings = settings
-        return Section("Rendering") {
-            Toggle("Use Metal renderer (experimental)", isOn: $settings.useMetalRenderer)
-            Text("GPU-accelerated rendering. Turn off if you see drawing glitches.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
         }
     }
 
