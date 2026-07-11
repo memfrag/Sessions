@@ -60,6 +60,12 @@ struct TerminalCommands: Commands {
                 openWindow(id: SnippetsWindow.windowID)
             }
             .keyboardShortcut("s", modifiers: [.command, .shift])
+
+            #if DEBUG
+            Button("Ghostty Spike…") {
+                openWindow(id: GhosttySpikeWindow.windowID)
+            }
+            #endif
         }
 
         CommandGroup(after: .textEditing) {

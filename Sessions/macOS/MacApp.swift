@@ -40,5 +40,8 @@ struct MacApp: App {
         ], header: "The following software may be included in this product.")
         HelpWindow()
         SnippetsWindow(workspacesModel: workspacesModel)
+        #if DEBUG
+        GhosttySpikeWindow()
+        #endif
     }
 }

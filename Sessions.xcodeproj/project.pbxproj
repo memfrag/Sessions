@@ -15,6 +15,7 @@
 		41505DB22FFD7E3F00D4C4B5 /* SessionsProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 5E5510000000000000000101 /* SessionsProtocol */; };
 		41505DB32FFD7E3F00D4C4B5 /* SessionsClient in Frameworks */ = {isa = PBXBuildFile; productRef = 5E5510000000000000000102 /* SessionsClient */; };
 		41505DB42FFD7E3F00D4C4B5 /* sessions-server in Frameworks */ = {isa = PBXBuildFile; productRef = 5E5510000000000000000103 /* sessions-server */; };
+		41506D0B3001AB3C00D4C4B5 /* GhosttyTerminal in Frameworks */ = {isa = PBXBuildFile; productRef = 41506D0A3001AB3C00D4C4B5 /* GhosttyTerminal */; };
 		4913FB2D61D2ED26C8A56D2C /* Constructs in Frameworks */ = {isa = PBXBuildFile; productRef = F168078E0611B5307598889D /* Constructs */; };
 		58B5CA104CDF1B309FCC060E /* MessagePackKit in Frameworks */ = {isa = PBXBuildFile; productRef = 2E585A5805F8B14BE7EE930F /* MessagePackKit */; };
 		5DAFC4B707DCD6CECA1FD7A9 /* BinaryDataKit in Frameworks */ = {isa = PBXBuildFile; productRef = 388940A66362A7CE5B4A6AA4 /* BinaryDataKit */; };
@@ -129,6 +130,7 @@
 				DEBFB46A38B926A7244C4289 /* AppRouting in Frameworks */,
 				FB053AA26CEF5CE505DFD613 /* AttributionsUI in Frameworks */,
 				5DAFC4B707DCD6CECA1FD7A9 /* BinaryDataKit in Frameworks */,
+				41506D0B3001AB3C00D4C4B5 /* GhosttyTerminal in Frameworks */,
 				E5157EBA4C0A9E51FA6D6ABC /* CGMath in Frameworks */,
 				88C9FA50C20E5F2B904A2697 /* CollectionKit in Frameworks */,
 				4913FB2D61D2ED26C8A56D2C /* Constructs in Frameworks */,
@@ -232,6 +234,7 @@
 				5E5510000000000000000101 /* SessionsProtocol */,
 				5E5510000000000000000102 /* SessionsClient */,
 				5E5510000000000000000103 /* sessions-server */,
+				41506D0A3001AB3C00D4C4B5 /* GhosttyTerminal */,
 			);
 			productName = Sessions;
 			productReference = ABCA9000E64F9C230E75FEFA /* Sessions.app */;
@@ -280,6 +283,7 @@
 				57D1154F9110282A72B445D2 /* XCLocalSwiftPackageReference "Packages/AppDesign" */,
 				415059F12FFD6AEC00D4C4B5 /* XCRemoteSwiftPackageReference "SwiftTerm" */,
 				5E5510000000000000000201 /* XCLocalSwiftPackageReference "Packages/SessionsKit" */,
+				41506D093001AB3C00D4C4B5 /* XCRemoteSwiftPackageReference "libghostty-spm" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 6EA638F4617A9F965FC0F1F0 /* Products */;
@@ -580,6 +584,14 @@
 				version = 1.13.0;
 			};
 		};
+		41506D093001AB3C00D4C4B5 /* XCRemoteSwiftPackageReference "libghostty-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Lakr233/libghostty-spm";
+			requirement = {
+				kind = exactVersion;
+				version = 1.2.11;
+			};
+		};
 		5135A5EBC969A38D7F9E8442 /* XCRemoteSwiftPackageReference "TextToolbox" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apparata/TextToolbox.git";
@@ -719,6 +731,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 415059F12FFD6AEC00D4C4B5 /* XCRemoteSwiftPackageReference "SwiftTerm" */;
 			productName = SwiftTerm;
+		};
+		41506D0A3001AB3C00D4C4B5 /* GhosttyTerminal */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 41506D093001AB3C00D4C4B5 /* XCRemoteSwiftPackageReference "libghostty-spm" */;
+			productName = GhosttyTerminal;
 		};
 		5D7979A4F0377547F01960BF /* AppDesign */ = {
 			isa = XCSwiftPackageProductDependency;

@@ -1,5 +1,5 @@
 {
-  "originHash" : "2874e01022c95f1f243774eb228b6043e8ec9d577460a72dd4633aeef8f550d7",
+  "originHash" : "9138ea79f18a419363cea4b59647d09c3d94c1607f93319696c9fdbcb5487e91",
   "pins" : [
     {
       "identity" : "approuting",
@@ -65,6 +65,15 @@
       }
     },
     {
+      "identity" : "libghostty-spm",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Lakr233/libghostty-spm",
+      "state" : {
+        "revision" : "faec539df2ada15503da1ff3d5e105b5eadd5264",
+        "version" : "1.2.11"
+      }
+    },
+    {
       "identity" : "markdownui",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apparata/MarkdownUI.git",
@@ -98,6 +107,15 @@
       "state" : {
         "revision" : "51805b8f2ad78496ff489743adf0c4fc6e37f1bd",
         "version" : "1.4.1"
+      }
+    },
+    {
+      "identity" : "msdisplaylink",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Lakr233/MSDisplayLink.git",
+      "state" : {
+        "revision" : "1ba3e769b734e456317fa7e45321fa7f53eefb67",
+        "version" : "2.1.0"
       }
     },
     {
