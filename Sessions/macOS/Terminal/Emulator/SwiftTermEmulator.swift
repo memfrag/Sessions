@@ -17,6 +17,10 @@ final class SwiftTermEmulator: NSObject, TerminalEmulator {
 
     weak var delegate: TerminalEmulatorDelegate?
 
+    /// SwiftTerm renders from a headless buffer immediately, so it never
+    /// needs the controller to re-attach on surface creation. Unused.
+    var onSurfaceReady: (() -> Void)?
+
     var view: NSView { terminalView }
 
     var cols: Int { terminalView.getTerminal().cols }
@@ -41,13 +45,9 @@ final class SwiftTermEmulator: NSObject, TerminalEmulator {
         terminalView = SessionsTerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
         super.init()
         terminalView.terminalDelegate = self
-        // OSC 9 (iTerm2/kitty notification convention), e.g. Claude Code
-        // hooks. Fires synchronously during feed() on the main actor.
-        terminalView.getTerminal().registerOscHandler(code: 9) { [weak self] payload in
-            MainActor.assumeIsolated {
-                self?.delegate?.emulatorNotification(String(bytes: payload, encoding: .utf8))
-            }
-        }
+        // Attention sequences (OSC 0/2/7/9, BEL) are parsed by the controller's
+        // TerminalStreamScanner from the raw server stream, not here, so they
+        // fire for background tabs too.
     }
 
     // MARK: - TerminalEmulator
@@ -232,11 +232,11 @@ extension SwiftTermEmulator: @preconcurrency TerminalViewDelegate {
     }
 
     func setTerminalTitle(source: TerminalView, title: String) {
-        delegate?.emulatorTitle(title)
+        // Title comes from the controller's stream scanner.
     }
 
     func hostCurrentDirectoryUpdate(source: TerminalView, directory: String?) {
-        delegate?.emulatorCwd(directory)
+        // cwd comes from the controller's stream scanner.
     }
 
     func requestOpenLink(source: TerminalView, link: String, params: [String: String]) {
@@ -244,7 +244,7 @@ extension SwiftTermEmulator: @preconcurrency TerminalViewDelegate {
     }
 
     func bell(source: TerminalView) {
-        delegate?.emulatorBell()
+        // Bell comes from the controller's stream scanner.
     }
 
     func clipboardCopy(source: TerminalView, content: Data) {

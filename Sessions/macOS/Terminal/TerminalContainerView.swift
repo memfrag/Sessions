@@ -17,10 +17,12 @@ import AppKit
 final class TerminalContainerView: NSView {
 
     /// Inner margins between the container edges and the terminal content.
-    static let leadingInset: CGFloat = 8
-    static let trailingInset: CGFloat = 2
-    static let topInset: CGFloat = 6
-    static let bottomInset: CGFloat = 6
+    /// Zero for the Ghostty backend — the terminal fills the container and
+    /// its inner margin comes from ghostty's `window-padding-*` config.
+    static let leadingInset: CGFloat = 0
+    static let trailingInset: CGFloat = 0
+    static let topInset: CGFloat = 0
+    static let bottomInset: CGFloat = 0
 
     /// The terminal view to keep inset within the container.
     weak var hostedView: NSView? {

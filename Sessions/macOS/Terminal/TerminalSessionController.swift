@@ -29,6 +29,12 @@ final class TerminalSessionController {
 
     private let client: SessionServerClient
 
+    /// Parses attention sequences (title, cwd, bell, OSC 9) out of the raw
+    /// server stream, independent of the render engine — so background and
+    /// never-mounted tabs still drive badges even when the Ghostty backend
+    /// has no surface to parse into.
+    private let scanner = TerminalStreamScanner()
+
     private var attachment: SessionAttachment?
 
     private var pumpTask: Task<Void, Never>?
@@ -189,8 +195,47 @@ final class TerminalSessionController {
     init(sessionID: SessionInfo.ID, client: SessionServerClient) {
         self.sessionID = sessionID
         self.client = client
-        emulator = SwiftTermEmulator()
+        emulator = GhosttyEmulator()
         emulator.delegate = self
+        // The Ghostty backend only parses bytes once its render surface
+        // exists; when it appears, re-attach so the server replays scrollback
+        // into the now-live surface.
+        emulator.onSurfaceReady = { [weak self] in
+            self?.attach()
+        }
+        configureScanner()
+    }
+
+    /// Routes attention sequences from the raw stream into controller state.
+    /// The replay guards mirror the live/replay handling the emulator
+    /// callbacks used to do.
+    private func configureScanner() {
+        scanner.onTitle = { [weak self] title in
+            self?.shellTitle = title.isEmpty ? nil : title
+        }
+        scanner.onCwd = { [weak self] payload in
+            self?.noteCwd(payload)
+        }
+        scanner.onBell = { [weak self] in
+            guard let self, !isReplaying else { return }
+            // Historical BELs still in the scrollback re-fire during replay
+            // (badging a tab on every app start); only live bells count.
+            hasBell = true
+        }
+        scanner.onNotification = { [weak self] payload in
+            self?.noteNotification(message: payload)
+        }
+    }
+
+    private func noteCwd(_ payload: String) {
+        guard let path = Self.parseOSC7Path(payload) else { return }
+        currentDirectory = path
+        // During replay, historical OSC 7 sequences fire this repeatedly;
+        // record locally and report once on replayDone instead of spamming
+        // the socket. Live updates are forwarded immediately.
+        if !isReplaying {
+            reportCwdIfChanged()
+        }
     }
 
     private func noteNotification(message: String?) {
@@ -238,6 +283,7 @@ final class TerminalSessionController {
         pumpTask = Task {
             // Full terminal reset before the replay arrives.
             emulator.reset()
+            scanner.reset()
             let attachment: SessionAttachment?
             attachment = try? await client.attach(
                 sessionID: sessionID,
@@ -254,6 +300,10 @@ final class TerminalSessionController {
                 case .replayStarted:
                     isReplaying = true
                 case .output(let chunk):
+                    // Attention parsing runs for every session regardless of
+                    // render-surface state; the emulator only renders when it
+                    // has a surface (Ghostty drops bytes otherwise).
+                    scanner.scan(chunk[...])
                     emulator.feed(chunk[...])
                 case .replayDone:
                     isReplaying = false
@@ -312,25 +362,6 @@ extension TerminalSessionController: TerminalEmulatorDelegate {
         attachment?.resize(cols: cols, rows: rows)
     }
 
-    func emulatorTitle(_ title: String) {
-        shellTitle = title.isEmpty ? nil : title
-    }
-
-    func emulatorCwd(_ directory: String?) {
-        guard let directory, let path = Self.parseOSC7Path(directory) else { return }
-        currentDirectory = path
-        // During replay, historical OSC 7 sequences fire this repeatedly;
-        // record locally and report once on replayDone instead of spamming
-        // the socket. Live updates are forwarded immediately.
-        if !isReplaying {
-            reportCwdIfChanged()
-        }
-    }
-
-    func emulatorNotification(_ payload: String?) {
-        noteNotification(message: payload)
-    }
-
     private func reportCwdIfChanged() {
         guard let path = currentDirectory, path != lastReportedCwd else { return }
         lastReportedCwd = path
@@ -356,13 +387,6 @@ extension TerminalSessionController: TerminalEmulatorDelegate {
         if let url = URL(string: link) {
             NSWorkspace.shared.open(url)
         }
-    }
-
-    func emulatorBell() {
-        // Historical BELs still in the scrollback re-fire during replay
-        // (badging a tab on every app start); only live bells count.
-        guard !isReplaying else { return }
-        hasBell = true
     }
 
     func emulatorCopy(_ content: Data) {

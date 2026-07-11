@@ -20,6 +20,12 @@ protocol TerminalEmulator: AnyObject {
 
     var delegate: TerminalEmulatorDelegate? { get set }
 
+    /// Invoked when the render surface first becomes available (or is
+    /// re-created). The controller re-attaches in response so the server
+    /// replays scrollback into the now-live surface. Engines with a headless
+    /// buffer that renders from the start (SwiftTerm) never call this.
+    var onSurfaceReady: (() -> Void)? { get set }
+
     var cols: Int { get }
 
     var rows: Int { get }
@@ -55,6 +61,12 @@ protocol TerminalEmulator: AnyObject {
 }
 
 /// Callbacks from the emulator toward the controller.
+///
+/// Attention signals (title, bell, cwd, OSC 9) are intentionally *not* here:
+/// the controller parses those from the raw server stream with
+/// `TerminalStreamScanner` so they work for background/never-mounted tabs
+/// regardless of whether a render surface exists. This delegate only carries
+/// callbacks tied to a live, on-screen surface.
 @MainActor
 protocol TerminalEmulatorDelegate: AnyObject {
 
@@ -62,17 +74,6 @@ protocol TerminalEmulatorDelegate: AnyObject {
     func emulatorSend(_ bytes: ArraySlice<UInt8>)
 
     func emulatorResized(cols: Int, rows: Int)
-
-    /// Title from OSC 0/2 (empty string means "no title").
-    func emulatorTitle(_ title: String)
-
-    func emulatorBell()
-
-    /// Raw OSC 7 working-directory payload.
-    func emulatorCwd(_ directory: String?)
-
-    /// Raw OSC 9 notification payload (e.g. Claude Code hooks).
-    func emulatorNotification(_ payload: String?)
 
     /// OSC 52 clipboard copy.
     func emulatorCopy(_ content: Data)
