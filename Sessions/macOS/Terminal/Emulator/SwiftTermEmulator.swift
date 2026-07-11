@@ -66,22 +66,6 @@ final class SwiftTermEmulator: NSObject, TerminalEmulator {
         terminalView.setNeedsDisplay(terminalView.bounds)
     }
 
-    func focus() {
-        terminalView.window?.makeFirstResponder(terminalView)
-    }
-
-    @discardableResult
-    func find(_ text: String, forward: Bool, caseSensitive: Bool, regex: Bool) -> Bool {
-        let options = SearchOptions(caseSensitive: caseSensitive, regex: regex)
-        return forward
-            ? terminalView.findNext(text, options: options, scrollToResult: true)
-            : terminalView.findPrevious(text, options: options, scrollToResult: true)
-    }
-
-    func clearSearch() {
-        terminalView.clearSearch()
-    }
-
     @discardableResult
     func apply(_ appearance: TerminalAppearance) -> Bool {
         if terminalView.font != appearance.font {

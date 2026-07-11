@@ -45,19 +45,11 @@ protocol TerminalEmulator: AnyObject {
     /// Forces a full repaint from the buffer (e.g. after being re-shown).
     func redraw()
 
-    /// Makes the view first responder (used when closing the find bar).
-    func focus()
-
     /// Applies appearance/behavior settings. Returns `true` when the change
     /// rebuilt the terminal buffers and the caller should re-attach so the
     /// server replays the content back.
     @discardableResult
     func apply(_ appearance: TerminalAppearance) -> Bool
-
-    @discardableResult
-    func find(_ text: String, forward: Bool, caseSensitive: Bool, regex: Bool) -> Bool
-
-    func clearSearch()
 }
 
 /// Callbacks from the emulator toward the controller.

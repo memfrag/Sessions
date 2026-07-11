@@ -92,56 +92,6 @@ final class TerminalSessionController {
     /// the responses land at the shell prompt as garbage input.
     private var isReplaying = false
 
-    /// Whether the find bar is shown for this tab (state lives here so it
-    /// survives tab switches).
-    var isFindBarVisible = false
-
-    // MARK: - Find in scrollback
-
-    var findText = "" {
-        didSet {
-            if findText != oldValue {
-                findFailed = false
-            }
-        }
-    }
-
-    var findCaseSensitive = false {
-        didSet {
-            findFailed = false
-        }
-    }
-
-    var findRegex = false {
-        didSet {
-            findFailed = false
-        }
-    }
-
-    /// The last search found no match (also set for invalid regexes).
-    private(set) var findFailed = false
-
-    func showFindBar() {
-        isFindBarVisible = true
-    }
-
-    func hideFindBar() {
-        isFindBarVisible = false
-        findFailed = false
-        emulator.clearSearch()
-        emulator.focus()
-    }
-
-    func findNext() {
-        guard !findText.isEmpty else { return }
-        findFailed = !emulator.find(findText, forward: true, caseSensitive: findCaseSensitive, regex: findRegex)
-    }
-
-    func findPrevious() {
-        guard !findText.isEmpty else { return }
-        findFailed = !emulator.find(findText, forward: false, caseSensitive: findCaseSensitive, regex: findRegex)
-    }
-
     // MARK: - Appearance
 
     /// Applies appearance/behavior settings to the emulator. Called from

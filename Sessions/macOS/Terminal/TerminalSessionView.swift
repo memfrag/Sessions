@@ -72,15 +72,13 @@ struct TerminalSessionView: NSViewRepresentable {
         // Only the selected tab accepts file drops (all tabs stay mounted and
         // stacked, so drops must target the visible one).
         nsView.setDropEnabled(isSelected)
-        guard isSelected, !controller.isFindBarVisible, !model.isCommandPaletteVisible else { return }
-        // The conditions are re-checked when the block fires: a grab
-        // scheduled just before the find bar or command palette opened
-        // must not steal focus back from their text fields.
+        guard isSelected, !model.isCommandPaletteVisible else { return }
+        // The condition is re-checked when the block fires: a grab scheduled
+        // just before the command palette opened must not steal focus back
+        // from its text field.
         let model = self.model
-        let controller = self.controller
         DispatchQueue.main.async {
-            guard !controller.isFindBarVisible,
-                  !model.isCommandPaletteVisible,
+            guard !model.isCommandPaletteVisible,
                   let window = terminalView.window,
                   // Only claim focus in the key window. Grabbing focus in a
                   // background window makes the terminal fire a focus-in

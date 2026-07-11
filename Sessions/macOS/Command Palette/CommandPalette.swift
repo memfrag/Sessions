@@ -233,20 +233,10 @@ struct CommandPaletteView: View {
             id: "action-new-workspace",
             title: "New Workspace…",
             systemImage: "folder.badge.plus",
-            shortcutHint: "⇧⌘N"
+            shortcutHint: "⌘N"
         ) { [model] in
             model.beginNewWorkspace()
         })
-        if model.selectedTerminalController != nil {
-            commands.append(PaletteCommand(
-                id: "action-find",
-                title: "Find in Terminal",
-                systemImage: "magnifyingglass",
-                shortcutHint: "⌘F"
-            ) { [model] in
-                model.selectedTerminalController?.showFindBar()
-            })
-        }
         // Current working directory of the focused tab (via OSC 7);
         // absent without shell integration.
         if let directory = model.selectedTerminalController?.currentDirectory {

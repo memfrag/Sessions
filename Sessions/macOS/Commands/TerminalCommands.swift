@@ -60,32 +60,6 @@ struct TerminalCommands: Commands {
                 openWindow(id: SnippetsWindow.windowID)
             }
             .keyboardShortcut("s", modifiers: [.command, .shift])
-
-            #if DEBUG
-            Button("Ghostty Spike…") {
-                openWindow(id: GhosttySpikeWindow.windowID)
-            }
-            #endif
-        }
-
-        CommandGroup(after: .textEditing) {
-            Button("Find…") {
-                model?.selectedTerminalController?.showFindBar()
-            }
-            .keyboardShortcut("f", modifiers: .command)
-            .disabled(model?.selectedTerminalController == nil)
-
-            Button("Find Next") {
-                model?.selectedTerminalController?.findNext()
-            }
-            .keyboardShortcut("g", modifiers: .command)
-            .disabled(model?.selectedTerminalController == nil)
-
-            Button("Find Previous") {
-                model?.selectedTerminalController?.findPrevious()
-            }
-            .keyboardShortcut("g", modifiers: [.command, .shift])
-            .disabled(model?.selectedTerminalController == nil)
         }
 
         CommandMenu("Tabs") {

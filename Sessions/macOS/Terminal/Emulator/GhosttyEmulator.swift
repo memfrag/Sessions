@@ -130,10 +130,6 @@ final class GhosttyEmulator: NSObject, TerminalEmulator {
         terminalView.fitToSize()
     }
 
-    func focus() {
-        terminalView.window?.makeFirstResponder(terminalView)
-    }
-
     @discardableResult
     func apply(_ appearance: TerminalAppearance) -> Bool {
         backgroundColor = effectiveBackgroundColor(appearance)
@@ -150,15 +146,6 @@ final class GhosttyEmulator: NSObject, TerminalEmulator {
         // controller never needs to re-attach on an appearance change.
         return false
     }
-
-    // Search has no libghostty-spm API (`readViewportText` is viewport-only),
-    // so find-in-scrollback is unavailable with this backend.
-    @discardableResult
-    func find(_ text: String, forward: Bool, caseSensitive: Bool, regex: Bool) -> Bool {
-        false
-    }
-
-    func clearSearch() {}
 
     // MARK: - Appearance mapping
 
