@@ -23,7 +23,7 @@ final class TerminalSessionController {
 
     let sessionID: SessionInfo.ID
 
-    /// The terminal engine + rendered view (SwiftTerm today, behind the
+    /// The terminal engine + rendered view (libghostty, behind the
     /// `TerminalEmulator` seam).
     let emulator: TerminalEmulator
 

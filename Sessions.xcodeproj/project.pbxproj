@@ -11,7 +11,6 @@
 		29739C08E86A383D5BADB0ED /* KeyValueStore in Frameworks */ = {isa = PBXBuildFile; productRef = E0D91C68B9900145857412CF /* KeyValueStore */; };
 		37036EE0D99F7034F0DB5B12 /* URLToolbox in Frameworks */ = {isa = PBXBuildFile; productRef = 9D239BD600BD76353036F1E2 /* URLToolbox */; };
 		3BB8C838867D235CF80873FC /* MathKit in Frameworks */ = {isa = PBXBuildFile; productRef = DDE17AAE5F2CFACF75EFE51D /* MathKit */; };
-		415059F32FFD6AEC00D4C4B5 /* SwiftTerm in Frameworks */ = {isa = PBXBuildFile; productRef = 415059F22FFD6AEC00D4C4B5 /* SwiftTerm */; };
 		41505DB22FFD7E3F00D4C4B5 /* SessionsProtocol in Frameworks */ = {isa = PBXBuildFile; productRef = 5E5510000000000000000101 /* SessionsProtocol */; };
 		41505DB32FFD7E3F00D4C4B5 /* SessionsClient in Frameworks */ = {isa = PBXBuildFile; productRef = 5E5510000000000000000102 /* SessionsClient */; };
 		41505DB42FFD7E3F00D4C4B5 /* sessions-server in Frameworks */ = {isa = PBXBuildFile; productRef = 5E5510000000000000000103 /* sessions-server */; };
@@ -124,7 +123,6 @@
 				41505DB42FFD7E3F00D4C4B5 /* sessions-server in Frameworks */,
 				41505DB32FFD7E3F00D4C4B5 /* SessionsClient in Frameworks */,
 				41505DB22FFD7E3F00D4C4B5 /* SessionsProtocol in Frameworks */,
-				415059F32FFD6AEC00D4C4B5 /* SwiftTerm in Frameworks */,
 				D0FE70FD07696348ACF81040 /* AppDesign in Frameworks */,
 				FDDF54A5B317A1233ECE4E91 /* Sparkle in Frameworks */,
 				DEBFB46A38B926A7244C4289 /* AppRouting in Frameworks */,
@@ -230,7 +228,6 @@
 				9D239BD600BD76353036F1E2 /* URLToolbox */,
 				BE9EFDAF398A7BC883E8AA65 /* UserDefaultsUI */,
 				A4E1C33BC27AF32C45B9D8CC /* Zipcode */,
-				415059F22FFD6AEC00D4C4B5 /* SwiftTerm */,
 				5E5510000000000000000101 /* SessionsProtocol */,
 				5E5510000000000000000102 /* SessionsClient */,
 				5E5510000000000000000103 /* sessions-server */,
@@ -281,7 +278,6 @@
 				0C6962277A9F257B95EBF318 /* XCRemoteSwiftPackageReference "UserDefaultsUI" */,
 				62451142C5660967C26D0EC9 /* XCRemoteSwiftPackageReference "Zipcode" */,
 				57D1154F9110282A72B445D2 /* XCLocalSwiftPackageReference "Packages/AppDesign" */,
-				415059F12FFD6AEC00D4C4B5 /* XCRemoteSwiftPackageReference "SwiftTerm" */,
 				5E5510000000000000000201 /* XCLocalSwiftPackageReference "Packages/SessionsKit" */,
 				41506D093001AB3C00D4C4B5 /* XCRemoteSwiftPackageReference "libghostty-spm" */,
 			);
@@ -576,14 +572,6 @@
 				version = 1.4.1;
 			};
 		};
-		415059F12FFD6AEC00D4C4B5 /* XCRemoteSwiftPackageReference "SwiftTerm" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/migueldeicaza/SwiftTerm.git";
-			requirement = {
-				kind = exactVersion;
-				version = 1.13.0;
-			};
-		};
 		41506D093001AB3C00D4C4B5 /* XCRemoteSwiftPackageReference "libghostty-spm" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/Lakr233/libghostty-spm";
@@ -726,11 +714,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = BE316D15FEDDDAB865FC5E81 /* XCRemoteSwiftPackageReference "BinaryDataKit" */;
 			productName = BinaryDataKit;
-		};
-		415059F22FFD6AEC00D4C4B5 /* SwiftTerm */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 415059F12FFD6AEC00D4C4B5 /* XCRemoteSwiftPackageReference "SwiftTerm" */;
-			productName = SwiftTerm;
 		};
 		41506D0A3001AB3C00D4C4B5 /* GhosttyTerminal */ = {
 			isa = XCSwiftPackageProductDependency;

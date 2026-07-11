@@ -10,8 +10,8 @@ import OSLog
 /// `InMemoryTerminalSession` and is the single place that knows the
 /// libghostty-spm API.
 ///
-/// Unlike SwiftTerm, Ghostty's terminal buffer lives in a render *surface*
-/// that only exists once the view is in a window and sized. Bytes fed before
+/// Ghostty's terminal buffer lives in a render *surface* that only exists
+/// once the view is in a window and sized. Bytes fed before
 /// the surface exists are dropped, so the controller re-attaches (replaying
 /// the server's ring) when `onSurfaceReady` fires. The surface then persists
 /// across mount/unmount, so no further re-attach is needed while the emulator

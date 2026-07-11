@@ -5,9 +5,9 @@
 import AppKit
 
 /// Engine-neutral interface for the terminal emulator + rendered view that
-/// `TerminalSessionController` drives. SwiftTerm is the current backend
-/// (`SwiftTermEmulator`); this seam confines the dependency so an
-/// alternative engine (e.g. libghostty) can be a drop-in.
+/// `TerminalSessionController` drives. `GhosttyEmulator` (libghostty) is the
+/// backend; this seam confines the dependency so an alternative engine can
+/// be a drop-in.
 ///
 /// The emulator is headless with respect to the process: the PTY lives in
 /// the session server. Server output is pushed in via `feed`, and user
@@ -22,8 +22,8 @@ protocol TerminalEmulator: AnyObject {
 
     /// Invoked when the render surface first becomes available (or is
     /// re-created). The controller re-attaches in response so the server
-    /// replays scrollback into the now-live surface. Engines with a headless
-    /// buffer that renders from the start (SwiftTerm) never call this.
+    /// replays scrollback into the now-live surface. An engine with a headless
+    /// buffer that renders from the start need not call this.
     var onSurfaceReady: (() -> Void)? { get set }
 
     var cols: Int { get }
