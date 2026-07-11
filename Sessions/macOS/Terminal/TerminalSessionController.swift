@@ -295,6 +295,14 @@ final class TerminalSessionController {
                 return
             }
             self.attachment = attachment
+            // Reconcile the PTY size with the emulator's current grid. The
+            // attach was requested with whatever size was known when it
+            // started (often the pre-surface default), and any resize that
+            // fired during the async handshake hit a nil/stale attachment and
+            // was dropped. Without this the server PTY can stay at the wrong
+            // width, so the shell wraps at a different column than the terminal
+            // renders — corrupting wrapped-line editing.
+            attachment.resize(cols: emulator.cols, rows: emulator.rows)
             for await event in attachment.events {
                 switch event {
                 case .replayStarted:
