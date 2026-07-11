@@ -26,7 +26,7 @@ struct TerminalCommands: Commands {
             Button("New Workspace…") {
                 model?.beginNewWorkspace()
             }
-            .keyboardShortcut("n", modifiers: [.command, .shift])
+            .keyboardShortcut("n", modifiers: .command)
             .disabled(model == nil)
 
             Button("New Tab") {
