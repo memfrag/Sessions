@@ -3,7 +3,8 @@
 
 A terminal multiplexer for macOS. Workspaces (name + root directory) in a
 sidebar, terminal tabs in the detail pane, rendered with
-[SwiftTerm](https://github.com/migueldeicaza/SwiftTerm).
+[libghostty](https://github.com/ghostty-org/ghostty) via
+[libghostty-spm](https://github.com/Lakr233/libghostty-spm).
 
 ## Architecture
 
@@ -13,7 +14,7 @@ the UI crashes. All PTYs live in a separate session-server process
 
 ```
 Sessions.app (SwiftUI)  ⇄  Unix socket  ⇄  sessions-server (launchd agent)
-  TerminalView per tab      framed protocol     PTY + shell per session
+  libghostty per tab        framed protocol     PTY + shell per session
   attach/detach/replay      JSON + raw bytes    2 MiB scrollback ring buffer
                                                 state.json (layout persistence)
 ```
@@ -27,7 +28,10 @@ Sessions.app (SwiftUI)  ⇄  Unix socket  ⇄  sessions-server (launchd agent)
     at `Contents/MacOS/`, managed as a launchd agent via `SMAppService`
     (plist in `Contents/Library/LaunchAgents/`).
   - `SessionsClient` — the app-side client actor.
-- **`Sessions/`** — the SwiftUI app.
+- **`Sessions/`** — the SwiftUI app. The terminal engine (libghostty) is
+  driven headlessly behind a `TerminalEmulator` seam: the server owns the
+  PTY, so the app feeds output bytes into the emulator and forwards user
+  input / resizes back out.
 
 Server lifecycle: launchd starts the server at login and relaunches it on
 crash (`KeepAlive.SuccessfulExit = false`). ⌘Q only detaches — shells keep
